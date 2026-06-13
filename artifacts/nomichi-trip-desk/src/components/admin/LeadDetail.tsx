@@ -7,7 +7,7 @@ import type { Lead, CallLog } from "@/lib/types";
 import { LEAD_STATUSES, STATUS_LABELS } from "@/lib/types";
 import { formatCurrency, formatDate, formatDateTime, getStatusBadgeClass } from "@/lib/utils";
 import {
-  ArrowLeft, MessageSquare, Phone, Sparkles, ChevronDown, Copy, Check,
+  ArrowLeft, MessageSquare, Phone, Sparkles, Copy, Check, Mail, ExternalLink,
 } from "lucide-react";
 
 interface Props {
@@ -158,6 +158,34 @@ export default function LeadDetail({ lead, callLogs: initialLogs, profiles }: Pr
                 Enquired {formatDate(lead.created_at)}
               </span>
             </div>
+
+            {/* Direct contact actions */}
+            <div className="flex items-center gap-2 mt-4 flex-wrap">
+              <a
+                href={`tel:+91${lead.phone}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-sand text-sm font-poppins text-ink/70 hover:border-ink/40 hover:text-ink transition-colors"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                Call
+              </a>
+              <a
+                href={`https://wa.me/91${lead.phone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-sand text-sm font-poppins text-ink/70 hover:border-olive hover:text-olive transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                WhatsApp
+                <ExternalLink className="w-3 h-3 opacity-50" />
+              </a>
+              <a
+                href={`mailto:${lead.email}?subject=Your Nomichi enquiry — ${trip?.name ?? "upcoming trip"}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-sand text-sm font-poppins text-ink/70 hover:border-ink/40 hover:text-ink transition-colors"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                Email
+              </a>
+            </div>
           </div>
           <span className={getStatusBadgeClass(status)}>{STATUS_LABELS[status]}</span>
         </div>
@@ -242,6 +270,17 @@ export default function LeadDetail({ lead, callLogs: initialLogs, profiles }: Pr
                         <Copy className="w-3.5 h-3.5" />
                       )}
                     </button>
+                    <div className="mt-3 pt-3 border-t border-olive/15 flex items-center gap-3">
+                      <a
+                        href={`https://wa.me/91${lead.phone}?text=${encodeURIComponent(whatsappDraft)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-poppins text-olive font-medium hover:underline"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Open in WhatsApp with this message
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>

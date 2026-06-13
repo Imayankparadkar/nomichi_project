@@ -45,9 +45,15 @@ export default function PublicPage({ trips }: Props) {
         {submitted && (
           <div className="mb-10 border-l-4 border-rust bg-rust/5 px-6 py-5">
             <p className="font-display font-bold text-xl text-ink mb-1">We have got your enquiry.</p>
-            <p className="text-ink/70 font-poppins text-sm leading-relaxed">
-              Someone from the Nomichi team will be in touch within 24 hours. Slow travel starts here.
+            <p className="text-ink/70 font-poppins text-sm leading-relaxed mb-3">
+              Someone from the Nomichi team will be in touch on WhatsApp within 24 hours.
             </p>
+            <div className="flex items-center gap-1.5 text-sm font-poppins text-ink/60">
+              <span>Want to check your status later?</span>
+              <a href="/status" className="text-rust underline underline-offset-2 hover:text-ink transition-colors">
+                Check enquiry status →
+              </a>
+            </div>
           </div>
         )}
 
