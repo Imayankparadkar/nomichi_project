@@ -1617,6 +1617,9 @@ video {
 .border-white\/10{
   border-color: rgb(255 255 255 / 0.1);
 }
+.border-rust\/20{
+  border-color: rgb(213 93 39 / 0.2);
+}
 .border-l-transparent{
   border-left-color: transparent;
 }

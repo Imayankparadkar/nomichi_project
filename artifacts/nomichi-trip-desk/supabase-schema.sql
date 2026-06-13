@@ -55,6 +55,23 @@ create table if not exists public.call_logs (
 );
 
 -- ============================================================
+-- Table-level grants (required in addition to RLS policies)
+-- ============================================================
+
+-- anon role: public reads + lead inserts only
+grant usage on schema public to anon;
+grant select on public.trips to anon;
+grant select on public.profiles to anon;
+grant insert on public.leads to anon;
+
+-- authenticated role: full access to all tables
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.trips to authenticated;
+grant select, insert, update, delete on public.leads to authenticated;
+grant select, insert, update, delete on public.call_logs to authenticated;
+grant select, update on public.profiles to authenticated;
+
+-- ============================================================
 -- Row Level Security
 -- ============================================================
 

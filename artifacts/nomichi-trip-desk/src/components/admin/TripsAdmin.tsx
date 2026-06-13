@@ -32,6 +32,7 @@ export default function TripsAdmin({ trips }: Props) {
   const [errors, setErrors] = useState<Partial<TripForm>>({});
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState("");
 
   function setField(field: keyof TripForm, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -80,11 +81,13 @@ export default function TripsAdmin({ trips }: Props) {
     setEditingId(null);
     setForm(emptyForm);
     setErrors({});
+    setSaveError("");
   }
 
   async function save() {
     if (!validate()) return;
     setSaving(true);
+    setSaveError("");
 
     const body = {
       name: form.name.trim(),
@@ -110,6 +113,9 @@ export default function TripsAdmin({ trips }: Props) {
     if (res.ok) {
       cancel();
       router.refresh();
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      setSaveError(errData.error ?? "Something went wrong. Please try again.");
     }
     setSaving(false);
   }
@@ -286,7 +292,13 @@ export default function TripsAdmin({ trips }: Props) {
             </div>
           </div>
 
-          <div className="flex gap-3 mt-5">
+          {saveError && (
+            <p className="text-rust text-sm font-poppins mt-4 bg-rust/5 border border-rust/20 px-4 py-2">
+              {saveError}
+            </p>
+          )}
+
+          <div className="flex gap-3 mt-4">
             <button
               onClick={save}
               disabled={saving}

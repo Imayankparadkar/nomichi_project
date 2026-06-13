@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const updateLeadSchema = z.object({
@@ -14,11 +14,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
@@ -31,7 +29,17 @@ export async function PATCH(
     );
   }
 
-  const { data, error } = await supabase
+  const adminClient = await createAdminClient();
+
+  // Fetch current lead status so we can adjust seats_available if needed
+  const { data: currentLead } = await adminClient
+    .from("leads")
+    .select("status, trip_id")
+    .eq("id", id)
+    .single();
+
+  // Update the lead
+  const { data, error } = await adminClient
     .from("leads")
     .update({ ...parsed.data, updated_at: new Date().toISOString() })
     .eq("id", id)
@@ -39,6 +47,34 @@ export async function PATCH(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Adjust seats_available when confirmation status changes
+  const newStatus = parsed.data.status;
+  const oldStatus = currentLead?.status;
+  const tripId = currentLead?.trip_id;
+
+  if (newStatus && newStatus !== oldStatus && tripId) {
+    const wasConfirmed = oldStatus === "CONFIRMED";
+    const nowConfirmed = newStatus === "CONFIRMED";
+
+    if (nowConfirmed || wasConfirmed) {
+      // Fetch current seats
+      const { data: trip } = await adminClient
+        .from("trips")
+        .select("seats_available")
+        .eq("id", tripId)
+        .single();
+
+      if (trip) {
+        const delta = nowConfirmed ? -1 : +1; // confirm → take a seat; unconfirm → release a seat
+        const newSeats = Math.max(0, trip.seats_available + delta);
+        await adminClient
+          .from("trips")
+          .update({ seats_available: newSeats })
+          .eq("id", tripId);
+      }
+    }
+  }
 
   return NextResponse.json(data);
 }
@@ -48,14 +84,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabase
+  const adminClient = await createAdminClient();
+  const { data, error } = await adminClient
     .from("leads")
     .select(`
       *,

@@ -10,7 +10,7 @@ export async function draftWhatsAppMessage(params: {
   groupType: string;
   vibeText: string;
 }): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const prompt = `You are writing a WhatsApp message for a Nomichi team member to send to a travel enquiry lead.
 
@@ -35,7 +35,7 @@ export async function summarizeCallLog(params: {
   currentStatus: string;
   callLogs: Array<{ note: string; next_action: string | null; created_at: string }>;
 }): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const logsText = params.callLogs
     .map(
@@ -67,7 +67,7 @@ export async function suggestVibeFit(params: {
   tripName: string;
   tripDescription: string;
 }): Promise<{ fit: "strong" | "possible" | "unlikely"; reason: string }> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const prompt = `You are helping a Nomichi travel associate assess whether an enquiry lead is a good fit for slow, small-group travel.
 

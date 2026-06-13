@@ -5,9 +5,7 @@ import { summarizeCallLog } from "@/lib/gemini";
 export async function POST(request: Request) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { lead_id } = await request.json();
@@ -30,12 +28,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ summary: "No call log entries yet." });
   }
 
-  const summary = await summarizeCallLog({
-    leadName: lead.name,
-    tripName: (lead as any).trips?.name ?? "unknown trip",
-    currentStatus: lead.status,
-    callLogs: callLogs,
-  });
-
-  return NextResponse.json({ summary });
+  try {
+    const summary = await summarizeCallLog({
+      leadName: lead.name,
+      tripName: (lead as any).trips?.name ?? "unknown trip",
+      currentStatus: lead.status,
+      callLogs: callLogs,
+    });
+    return NextResponse.json({ summary });
+  } catch {
+    return NextResponse.json(
+      { error: "AI generation failed. Please try again." },
+      { status: 500 }
+    );
+  }
 }

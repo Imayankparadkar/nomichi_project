@@ -6,9 +6,7 @@ import { formatDate } from "@/lib/utils";
 export async function POST(request: Request) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { lead_id } = await request.json();
@@ -26,14 +24,20 @@ export async function POST(request: Request) {
     ? `${formatDate(trip.start_date)} to ${formatDate(trip.end_date)}`
     : "dates TBC";
 
-  const draft = await draftWhatsAppMessage({
-    leadName: lead.name,
-    tripName: trip?.name ?? "your chosen trip",
-    tripDestination: trip?.destination ?? "",
-    tripDates,
-    groupType: lead.group_type,
-    vibeText: lead.vibe_text,
-  });
-
-  return NextResponse.json({ draft });
+  try {
+    const draft = await draftWhatsAppMessage({
+      leadName: lead.name,
+      tripName: trip?.name ?? "your chosen trip",
+      tripDestination: trip?.destination ?? "",
+      tripDates,
+      groupType: lead.group_type,
+      vibeText: lead.vibe_text,
+    });
+    return NextResponse.json({ draft });
+  } catch {
+    return NextResponse.json(
+      { error: "AI generation failed. Please try again." },
+      { status: 500 }
+    );
+  }
 }

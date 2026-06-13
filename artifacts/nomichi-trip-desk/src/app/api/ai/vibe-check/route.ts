@@ -5,9 +5,7 @@ import { suggestVibeFit } from "@/lib/gemini";
 export async function POST(request: Request) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { lead_id } = await request.json();
@@ -22,14 +20,20 @@ export async function POST(request: Request) {
 
   const trip = (lead as any).trips;
 
-  const result = await suggestVibeFit({
-    leadName: lead.name,
-    groupType: lead.group_type,
-    preferredMonth: lead.preferred_month,
-    vibeText: lead.vibe_text,
-    tripName: trip?.name ?? "this trip",
-    tripDescription: trip?.description ?? "",
-  });
-
-  return NextResponse.json(result);
+  try {
+    const result = await suggestVibeFit({
+      leadName: lead.name,
+      groupType: lead.group_type,
+      preferredMonth: lead.preferred_month,
+      vibeText: lead.vibe_text,
+      tripName: trip?.name ?? "this trip",
+      tripDescription: trip?.description ?? "",
+    });
+    return NextResponse.json(result);
+  } catch {
+    return NextResponse.json(
+      { error: "AI generation failed. Please try again." },
+      { status: 500 }
+    );
+  }
 }

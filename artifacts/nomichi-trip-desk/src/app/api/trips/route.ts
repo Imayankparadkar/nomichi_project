@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const tripSchema = z.object({
@@ -26,11 +26,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // Check auth first with anon client
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
@@ -43,7 +41,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data, error } = await supabase
+  // Use admin client to bypass RLS/grant issues for server-side writes
+  const adminClient = await createAdminClient();
+  const { data, error } = await adminClient
     .from("trips")
     .insert(parsed.data)
     .select()
