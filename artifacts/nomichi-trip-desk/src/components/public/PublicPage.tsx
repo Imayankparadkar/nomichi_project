@@ -48,10 +48,13 @@ export default function PublicPage({ trips }: Props) {
             <p className="text-ink/70 font-poppins text-sm leading-relaxed mb-3">
               Someone from the Nomichi team will be in touch on WhatsApp within 24 hours.
             </p>
-            <div className="flex items-center gap-1.5 text-sm font-poppins text-ink/60">
-              <span>Want to check your status later?</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-poppins text-ink/60">
               <a href="/status" className="text-rust underline underline-offset-2 hover:text-ink transition-colors">
                 Check enquiry status →
+              </a>
+              <span className="text-ink/20">·</span>
+              <a href="/chat" className="text-rust underline underline-offset-2 hover:text-ink transition-colors">
+                Message us directly →
               </a>
             </div>
           </div>

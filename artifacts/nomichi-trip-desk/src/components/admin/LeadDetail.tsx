@@ -9,6 +9,7 @@ import { formatCurrency, formatDate, formatDateTime, getStatusBadgeClass } from 
 import {
   ArrowLeft, MessageSquare, Phone, Sparkles, Copy, Check, Mail, ExternalLink,
 } from "lucide-react";
+import ChatBox from "@/components/ChatBox";
 
 interface Props {
   lead: Lead & { trips?: any; owner?: any };
@@ -427,6 +428,29 @@ export default function LeadDetail({ lead, callLogs: initialLogs, profiles }: Pr
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* In-site chat panel */}
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs uppercase tracking-wider font-poppins text-ink/50 font-medium">
+                Chat with lead
+              </h2>
+              <a
+                href="/chat"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-ink/30 font-poppins hover:text-ink/60 transition-colors"
+              >
+                Lead view ↗
+              </a>
+            </div>
+            <ChatBox
+              leadId={lead.id}
+              leadName={lead.name}
+              isAdmin={true}
+              height="h-72"
+            />
           </div>
         </div>
       </div>

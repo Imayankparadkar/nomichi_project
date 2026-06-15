@@ -44,6 +44,15 @@ create table if not exists public.leads (
   updated_at timestamptz not null default now()
 );
 
+-- Messages (in-site chat between admin and lead)
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  lead_id uuid not null references public.leads(id) on delete cascade,
+  sender text not null check (sender in ('admin', 'lead')),
+  content text not null,
+  created_at timestamptz not null default now()
+);
+
 -- Call logs
 create table if not exists public.call_logs (
   id uuid primary key default gen_random_uuid(),
@@ -70,6 +79,8 @@ grant select, insert, update, delete on public.trips to authenticated;
 grant select, insert, update, delete on public.leads to authenticated;
 grant select, insert, update, delete on public.call_logs to authenticated;
 grant select, update on public.profiles to authenticated;
+grant select, insert on public.messages to anon;
+grant select, insert, update on public.messages to authenticated;
 
 -- ============================================================
 -- Row Level Security
@@ -97,6 +108,12 @@ create policy "leads_auth_update" on public.leads for update using (auth.uid() i
 
 -- Call logs: authenticated only
 create policy "call_logs_auth_all" on public.call_logs for all using (auth.uid() is not null);
+
+-- Messages: anyone can read/write (lead_id UUID is hard to guess; API validates phone for leads)
+alter table public.messages enable row level security;
+create policy "messages_select" on public.messages for select using (true);
+create policy "messages_insert" on public.messages for insert with check (true);
+create policy "messages_update_auth" on public.messages for update using (auth.uid() is not null);
 
 -- ============================================================
 -- Auto-create profile on signup
