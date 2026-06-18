@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Nomichi Trip Desk"
+version = "1.0.0"
+id = "artifacts/nomichi-trip-desk"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25302
+
+[services.development]
+run = "pnpm --filter @workspace/nomichi-trip-desk run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nomichi-trip-desk", "run", "build" ]
+publicDir = "artifacts/nomichi-trip-desk/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25302"
+BASE_PATH = "/"
