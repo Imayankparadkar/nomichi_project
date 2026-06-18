@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { Trip } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { apiPatch, apiDelete } from "@/lib/api";
 
 const emptyForm = {
   name: "",
@@ -107,11 +108,7 @@ export default function TripsPage() {
     };
 
     if (editingId) {
-      const res = await fetch(`/api/trips/${editingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await apiPatch(`/api/trips/${editingId}`, body);
       if (!res.ok) {
         setSaveError("Could not save changes. Try again.");
         setSaving(false);
@@ -136,7 +133,7 @@ export default function TripsPage() {
   async function deleteTrip(id: string) {
     if (!confirm("Delete this trip? This cannot be undone.")) return;
     setDeletingId(id);
-    const res = await fetch(`/api/trips/${id}`, { method: "DELETE" });
+    const res = await apiDelete(`/api/trips/${id}`);
     if (res.ok) {
       setTrips(trips.filter((t) => t.id !== id));
     }

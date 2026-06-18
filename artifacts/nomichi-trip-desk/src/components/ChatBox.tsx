@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Send } from "lucide-react";
+import { apiGet, apiPost } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -35,7 +36,9 @@ export default function ChatBox({
     const params = new URLSearchParams({ lead_id: leadId });
     if (!isAdmin && phone) params.set("phone", phone);
 
-    const res = await fetch(`/api/messages?${params}`);
+    const res = isAdmin
+      ? await apiGet(`/api/messages?${params}`)
+      : await fetch(`/api/messages?${params}`);
     if (res.ok) {
       const data = await res.json();
       setMessages(data);
@@ -66,11 +69,13 @@ export default function ChatBox({
     };
     if (!isAdmin && phone) payload.phone = phone;
 
-    const res = await fetch("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const res = isAdmin
+      ? await apiPost("/api/messages", payload)
+      : await fetch("/api/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
     if (res.ok) {
       const msg = await res.json();

@@ -8,6 +8,7 @@ import {
   ArrowLeft, Phone, Sparkles, Copy, Check, ExternalLink,
 } from "lucide-react";
 import ChatBox from "@/components/ChatBox";
+import { apiGet, apiPost, apiPatch } from "@/lib/api";
 
 const vibeFitColors: Record<string, string> = {
   strong: "border-olive bg-olive/5 text-ink",
@@ -71,22 +72,14 @@ export default function LeadDetailPage() {
   }, [leadId]);
 
   async function updateStatus(newStatus: string) {
-    const res = await fetch(`/api/leads/${leadId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
+    const res = await apiPatch(`/api/leads/${leadId}`, { status: newStatus });
     if (res.ok) {
       setStatus(newStatus);
     }
   }
 
   async function updateOwner(newOwnerId: string) {
-    const res = await fetch(`/api/leads/${leadId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ owner_id: newOwnerId || null }),
-    });
+    const res = await apiPatch(`/api/leads/${leadId}`, { owner_id: newOwnerId || null });
     if (res.ok) {
       setOwnerId(newOwnerId);
     }
@@ -100,14 +93,10 @@ export default function LeadDetailPage() {
     setAddingLog(true);
     setLogError("");
 
-    const res = await fetch("/api/call-logs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        lead_id: leadId,
-        note: note.trim(),
-        next_action: nextAction.trim() || null,
-      }),
+    const res = await apiPost("/api/call-logs", {
+      lead_id: leadId,
+      note: note.trim(),
+      next_action: nextAction.trim() || null,
     });
 
     if (res.ok) {
@@ -123,11 +112,7 @@ export default function LeadDetailPage() {
 
   async function fetchWhatsappDraft() {
     setAiLoading("whatsapp");
-    const res = await fetch("/api/ai/whatsapp-draft", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lead_id: leadId }),
-    });
+    const res = await apiPost("/api/ai/whatsapp-draft", { lead_id: leadId });
     const data = await res.json();
     setWhatsappDraft(data.draft ?? "Could not generate draft.");
     setAiLoading(null);
@@ -135,11 +120,7 @@ export default function LeadDetailPage() {
 
   async function fetchLogSummary() {
     setAiLoading("summary");
-    const res = await fetch("/api/ai/summarize-log", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lead_id: leadId }),
-    });
+    const res = await apiPost("/api/ai/summarize-log", { lead_id: leadId });
     const data = await res.json();
     setLogSummary(data.summary ?? "Could not generate summary.");
     setAiLoading(null);
@@ -147,11 +128,7 @@ export default function LeadDetailPage() {
 
   async function fetchVibeFit() {
     setAiLoading("vibe");
-    const res = await fetch("/api/ai/vibe-check", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lead_id: leadId }),
-    });
+    const res = await apiPost("/api/ai/vibe-check", { lead_id: leadId });
     const data = await res.json();
     setVibeFit(data);
     setAiLoading(null);
