@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Trip } from "@/lib/types";
 import TripCard from "./TripCard";
 import EnquiryForm from "./EnquiryForm";
+import { ArrowUpRight, CheckCircle } from "lucide-react";
 
 interface Props {
   trips: Trip[];
@@ -26,45 +27,57 @@ export default function PublicPage({ trips }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-cream">
-      <header className="border-b border-sand/50 bg-cream sticky top-0 z-10">
+    <div className="min-h-screen bg-cream relative">
+      <div className="grain-overlay" aria-hidden="true" />
+
+      <header className="border-b border-sand/40 glass-header sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
+          <div className="flex items-center gap-3">
             <span className="font-display font-black text-2xl text-ink tracking-tight">Nomichi</span>
-            <span className="ml-3 text-xs text-ink/40 font-poppins hidden sm:inline">
+            <span className="text-xs text-ink/35 font-poppins hidden sm:inline">
               Travel that finds you.
             </span>
           </div>
-          <div className="w-2 h-2 rounded-full bg-rust" />
+          <div className="flex items-center gap-4">
+            <a
+              href="/status"
+              className="text-xs text-ink/50 font-poppins hover:text-rust transition-colors underline-anim hidden sm:block"
+            >
+              Track enquiry
+            </a>
+            <div className="w-2 h-2 rounded-full bg-rust pulse-dot" />
+          </div>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-12">
         {submitted && (
-          <div className="mb-10 border-l-4 border-rust bg-rust/5 px-6 py-5">
-            <p className="font-display font-bold text-xl text-ink mb-1">We have got your enquiry.</p>
-            <p className="text-ink/70 font-poppins text-sm leading-relaxed mb-3">
-              Someone from the Nomichi team will be in touch on WhatsApp within 24 hours.
-            </p>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-poppins text-ink/60">
-              <a href="/status" className="text-rust underline underline-offset-2 hover:text-ink transition-colors">
-                Check enquiry status →
-              </a>
-              <span className="text-ink/20">·</span>
-              <a href="/chat" className="text-rust underline underline-offset-2 hover:text-ink transition-colors">
-                Message us directly →
-              </a>
+          <div className="mb-10 border-l-4 border-rust bg-rust/5 px-6 py-5 animate-slide-right flex gap-4 items-start">
+            <CheckCircle className="w-5 h-5 text-rust mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-display font-bold text-xl text-ink mb-1">We have your enquiry.</p>
+              <p className="text-ink/70 font-poppins text-sm leading-relaxed mb-3">
+                Someone from the Nomichi team will be in touch on WhatsApp within 24 hours.
+              </p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-poppins">
+                <a
+                  href="/status"
+                  className="text-rust underline-anim hover:text-ink transition-colors inline-flex items-center gap-1"
+                >
+                  Check enquiry status <ArrowUpRight className="w-3 h-3" />
+                </a>
+              </div>
             </div>
           </div>
         )}
 
         {formOpen && selectedTrip ? (
-          <div>
+          <div className="animate-fade-up">
             <button
               onClick={() => setFormOpen(false)}
-              className="flex items-center gap-2 text-sm text-ink/60 font-poppins mb-6 hover:text-ink transition-colors"
+              className="flex items-center gap-2 text-sm text-ink/55 font-poppins mb-6 hover:text-rust transition-colors underline-anim"
             >
-              <span>&#8592;</span> Back to trips
+              ← Back to trips
             </button>
             <EnquiryForm
               trip={selectedTrip}
@@ -74,23 +87,42 @@ export default function PublicPage({ trips }: Props) {
           </div>
         ) : (
           <div>
-            <div className="mb-10">
-              <p className="text-xs uppercase tracking-widest text-rust font-poppins font-medium mb-3">
+            <div className="mb-12">
+              <p
+                className="text-xs uppercase tracking-[0.2em] text-rust font-poppins font-medium mb-4 animate-fade-in"
+                style={{ animationDelay: "0ms" }}
+              >
                 Open journeys
               </p>
-              <h1 className="font-display font-black text-4xl md:text-5xl text-ink leading-tight">
+              <h1
+                className="font-display font-black text-4xl md:text-5xl lg:text-6xl text-ink leading-tight animate-fade-up"
+                style={{ animationDelay: "60ms" }}
+              >
                 Where do you want
                 <br />
-                to find yourself?
+                <em className="text-rust">to find yourself?</em>
               </h1>
-              <p className="mt-4 text-ink/60 font-poppins text-base leading-relaxed max-w-xl">
-                Small groups. Real places. No template tours. Each trip is screened, curated and
-                run end to end by the Nomichi team.
+              <p
+                className="mt-5 text-ink/60 font-poppins text-base leading-relaxed max-w-xl animate-fade-up"
+                style={{ animationDelay: "130ms" }}
+              >
+                Small groups. Real places. No template tours. Each trip is screened,
+                curated and run end to end by the Nomichi team.
               </p>
+
+              <div
+                className="mt-6 flex items-center gap-3 animate-fade-up"
+                style={{ animationDelay: "200ms" }}
+              >
+                <div className="h-px w-10 bg-rust/40" />
+                <span className="text-xs text-ink/30 font-poppins uppercase tracking-widest">
+                  {trips.length} {trips.length === 1 ? "journey" : "journeys"} open now
+                </span>
+              </div>
             </div>
 
             {trips.length === 0 ? (
-              <div className="border border-sand/50 px-8 py-16 text-center">
+              <div className="border border-sand/50 px-8 py-16 text-center animate-fade-up">
                 <p className="font-display font-bold text-2xl text-ink mb-2">
                   Nothing open right now.
                 </p>
@@ -100,8 +132,8 @@ export default function PublicPage({ trips }: Props) {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {trips.map((trip) => (
-                  <TripCard key={trip.id} trip={trip} onEnquire={handleEnquire} />
+                {trips.map((trip, i) => (
+                  <TripCard key={trip.id} trip={trip} onEnquire={handleEnquire} index={i} />
                 ))}
               </div>
             )}
@@ -112,7 +144,7 @@ export default function PublicPage({ trips }: Props) {
       <footer className="border-t border-sand/30 mt-24 py-8">
         <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <span className="font-display font-bold text-ink">Nomichi</span>
-          <span className="text-xs text-ink/40 font-poppins">
+          <span className="text-xs text-ink/35 font-poppins tracking-[0.2em] uppercase">
             Wander. Connect. Belong.
           </span>
         </div>
