@@ -9,8 +9,8 @@ const statusColors: Record<LeadStatus, string> = {
   CONTACTED: "bg-sand",
   QUALIFIED: "bg-olive",
   VIBE_CHECK_SENT: "bg-rust",
-  CONFIRMED: "bg-ink",
-  NOT_A_FIT: "bg-sand/40",
+  CONFIRMED: "bg-cream/50",
+  NOT_A_FIT: "bg-cream/15",
 };
 
 const statuses: LeadStatus[] = [
@@ -38,24 +38,27 @@ function useCountUp(target: number, delay = 0) {
   return value;
 }
 
-function StatCard({
-  label,
-  value,
-  color = "text-ink",
-  delay = 0,
-}: {
-  label: string;
-  value: number;
-  color?: string;
-  delay?: number;
+function StatCard({ label, value, color = "text-cream", delay = 0 }: {
+  label: string; value: number; color?: string; delay?: number;
 }) {
   const displayed = useCountUp(value, delay);
   return (
     <div
-      className="card group hover:border-rust/40 hover:shadow-[0_4px_24px_rgba(213,93,39,0.07)] transition-all duration-300 hover:-translate-y-0.5 animate-fade-up"
-      style={{ animationDelay: `${delay}ms` }}
+      className="card group transition-all duration-300 hover:-translate-y-0.5 animate-fade-up"
+      style={{
+        animationDelay: `${delay}ms`,
+        ["--tw-shadow" as string]: "none",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(213,93,39,0.35)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(213,93,39,0.08)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,251,245,0.08)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "none";
+      }}
     >
-      <p className="text-xs uppercase tracking-widest text-ink/45 font-poppins mb-3">{label}</p>
+      <p className="text-xs uppercase tracking-widest text-cream/40 font-poppins mb-3">{label}</p>
       <p
         className={`text-5xl font-display font-bold ${color} count-up-num`}
         style={{ animationDelay: `${delay + 80}ms` }}
@@ -111,10 +114,10 @@ export default function DashboardPage() {
       <div className="p-8 flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-3">
           <span
-            className="w-6 h-6 border-2 border-sand border-t-rust rounded-full inline-block"
-            style={{ animation: "spin 0.7s linear infinite" }}
+            className="w-6 h-6 border-2 rounded-full inline-block"
+            style={{ borderColor: "rgba(255,251,245,0.15)", borderTopColor: "#D55D27", animation: "spin 0.7s linear infinite" }}
           />
-          <p className="text-ink/35 font-poppins text-sm">Loading…</p>
+          <p className="text-cream/30 font-poppins text-sm">Loading…</p>
         </div>
       </div>
     );
@@ -122,20 +125,23 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
+      {/* Greeting */}
       <div className="mb-9 animate-fade-up">
-        <h1 className="text-3xl font-display font-bold text-ink">{greeting}</h1>
-        <p className="text-ink/50 font-poppins mt-1 text-sm">Here is where things stand.</p>
+        <h1 className="text-3xl font-display font-bold text-cream">{greeting}</h1>
+        <p className="text-cream/40 font-poppins mt-1 text-sm">Here is where things stand.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard label="Total Leads" value={totalLeads} color="text-ink" delay={60} />
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+        <StatCard label="Total Leads" value={totalLeads} color="text-cream" delay={60} />
         <StatCard label="Confirmed" value={byStatus["CONFIRMED"] ?? 0} color="text-olive" delay={130} />
         <StatCard label="Open Trips" value={trips.filter((t) => t.status === "open").length} color="text-rust" delay={200} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      {/* Pipeline + Leads by trip */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
         <div className="card animate-fade-up" style={{ animationDelay: "260ms" }}>
-          <h2 className="text-lg font-display font-bold text-ink mb-5">Pipeline</h2>
+          <h2 className="text-base font-display font-bold text-cream mb-5">Pipeline</h2>
           <div className="space-y-4" ref={barsRef}>
             {statuses.map((status, i) => {
               const count = byStatus[status] ?? 0;
@@ -143,16 +149,13 @@ export default function DashboardPage() {
               return (
                 <div key={status}>
                   <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-sm font-poppins text-ink/65">{STATUS_LABELS[status]}</span>
-                    <span className="text-sm font-medium font-poppins text-ink tabular-nums">{count}</span>
+                    <span className="text-sm font-poppins text-cream/55">{STATUS_LABELS[status]}</span>
+                    <span className="text-sm font-medium font-poppins text-cream tabular-nums">{count}</span>
                   </div>
-                  <div className="h-1 bg-sand/25 w-full overflow-hidden">
+                  <div className="h-1 w-full overflow-hidden" style={{ background: "rgba(255,251,245,0.08)" }}>
                     <div
                       className={`h-full ${statusColors[status]} transition-all duration-700 ease-out`}
-                      style={{
-                        width: barsVisible ? `${pct}%` : "0%",
-                        transitionDelay: `${i * 80}ms`,
-                      }}
+                      style={{ width: barsVisible ? `${pct}%` : "0%", transitionDelay: `${i * 80}ms` }}
                     />
                   </div>
                 </div>
@@ -162,21 +165,24 @@ export default function DashboardPage() {
         </div>
 
         <div className="card animate-fade-up" style={{ animationDelay: "310ms" }}>
-          <h2 className="text-lg font-display font-bold text-ink mb-5">Leads by trip</h2>
+          <h2 className="text-base font-display font-bold text-cream mb-5">Leads by trip</h2>
           <div className="space-y-3">
             {Object.values(byTrip).length === 0 ? (
-              <p className="text-sm text-ink/35 font-poppins">No leads yet.</p>
+              <p className="text-sm text-cream/30 font-poppins">No leads yet.</p>
             ) : (
               Object.values(byTrip)
                 .sort((a, b) => b.count - a.count)
                 .map((item, i) => (
                   <div
                     key={item.name}
-                    className="flex justify-between items-center py-1.5 border-b border-sand/20 last:border-0 animate-fade-up"
-                    style={{ animationDelay: `${350 + i * 50}ms` }}
+                    className="flex justify-between items-center py-1.5 animate-fade-up"
+                    style={{
+                      borderBottom: "1px solid rgba(255,251,245,0.07)",
+                      animationDelay: `${350 + i * 50}ms`,
+                    }}
                   >
-                    <span className="text-sm font-poppins text-ink/65 truncate">{item.name}</span>
-                    <span className="text-sm font-medium font-poppins text-ink ml-4 tabular-nums">{item.count}</span>
+                    <span className="text-sm font-poppins text-cream/55 truncate">{item.name}</span>
+                    <span className="text-sm font-medium font-poppins text-cream ml-4 tabular-nums">{item.count}</span>
                   </div>
                 ))
             )}
@@ -184,27 +190,33 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Recent enquiries */}
       <div className="card animate-fade-up" style={{ animationDelay: "370ms" }}>
-        <h2 className="text-lg font-display font-bold text-ink mb-5">Recent enquiries</h2>
+        <h2 className="text-base font-display font-bold text-cream mb-5">Recent enquiries</h2>
         {recentLeads.length === 0 ? (
-          <p className="text-sm text-ink/35 font-poppins">No leads yet. They will show up here.</p>
+          <p className="text-sm text-cream/30 font-poppins">No leads yet. They will show up here.</p>
         ) : (
-          <div className="divide-y divide-sand/25">
+          <div>
             {recentLeads.map((lead: any, i) => (
               <div
                 key={lead.id}
-                className="py-3.5 flex justify-between items-center hover:bg-sand/8 transition-colors -mx-6 px-6 animate-fade-up"
-                style={{ animationDelay: `${400 + i * 55}ms` }}
+                className="py-3.5 flex justify-between items-center -mx-6 px-6 animate-fade-up transition-colors cursor-default"
+                style={{
+                  borderTop: i > 0 ? "1px solid rgba(255,251,245,0.06)" : "none",
+                  animationDelay: `${400 + i * 55}ms`,
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,251,245,0.03)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 <div>
-                  <p className="font-medium text-ink font-poppins text-sm">{lead.name}</p>
-                  <p className="text-xs text-ink/40 font-poppins mt-0.5">{lead.trips?.name}</p>
+                  <p className="font-medium text-cream font-poppins text-sm">{lead.name}</p>
+                  <p className="text-xs text-cream/35 font-poppins mt-0.5">{lead.trips?.name}</p>
                 </div>
                 <div className="text-right">
-                  <span className={`badge-${lead.status.toLowerCase().replace(/_/g, "-")} text-xs`}>
+                  <span className={`badge-${lead.status.toLowerCase().replace(/_/g, "-")}`}>
                     {STATUS_LABELS[lead.status as LeadStatus]}
                   </span>
-                  <p className="text-xs text-ink/35 font-poppins mt-1">
+                  <p className="text-xs text-cream/25 font-poppins mt-1">
                     {formatDate(lead.created_at)}
                   </p>
                 </div>

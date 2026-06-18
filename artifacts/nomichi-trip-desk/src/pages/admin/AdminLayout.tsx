@@ -20,6 +20,9 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
+const VOID = "#0D0C0B";
+const SIDEBAR = "#0A0908";
+
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { user, loading, signOut } = useAuth();
   const [, setLocation] = useLocation();
@@ -45,10 +48,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: VOID }}>
         <span
-          className="w-5 h-5 border-2 border-sand border-t-rust rounded-full inline-block"
-          style={{ animation: "spin 0.7s linear infinite" }}
+          className="w-5 h-5 border-2 rounded-full inline-block"
+          style={{ borderColor: "rgba(255,251,245,0.2)", borderTopColor: "#D55D27", animation: "spin 0.7s linear infinite" }}
         />
       </div>
     );
@@ -73,17 +76,23 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     .toUpperCase();
 
   return (
-    <div className="flex h-screen bg-cream overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: VOID }}>
       <div className="grain-overlay" aria-hidden="true" />
 
-      <aside className="w-56 flex-shrink-0 bg-ink flex flex-col border-r border-ink relative z-10">
-        <div className="px-5 py-6 border-b border-white/8">
+      {/* Sidebar */}
+      <aside
+        className="w-56 flex-shrink-0 flex flex-col relative z-10"
+        style={{ backgroundColor: SIDEBAR, borderRight: "1px solid rgba(255,251,245,0.06)" }}
+      >
+        {/* Logo */}
+        <div className="px-5 py-6" style={{ borderBottom: "1px solid rgba(255,251,245,0.06)" }}>
           <span className="font-display font-black text-xl text-cream tracking-tight">Nomichi</span>
           <p className="text-[10px] text-cream/25 font-poppins mt-0.5 uppercase tracking-widest">
             Trip Desk
           </p>
         </div>
 
+        {/* Nav */}
         <nav className="flex-1 px-3 py-5 space-y-0.5 overflow-y-auto">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = currentPath === href || currentPath.startsWith(href + "/");
@@ -94,16 +103,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 onClick={() => setCurrentPath(href)}
                 className={cn(
                   "group flex items-center gap-3 px-3 py-2.5 text-sm font-poppins font-medium transition-all duration-200 relative",
-                  active
-                    ? "text-cream"
-                    : "text-cream/50 hover:text-cream/90"
+                  active ? "text-cream" : "text-cream/45 hover:text-cream/80"
                 )}
               >
                 {active && (
-                  <span className="absolute inset-0 bg-rust/90 animate-fade-in" style={{ zIndex: -1 }} />
+                  <span
+                    className="absolute inset-0 animate-fade-in"
+                    style={{ background: "rgba(213,93,39,0.85)", zIndex: -1 }}
+                  />
                 )}
                 {!active && (
-                  <span className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors duration-200" style={{ zIndex: -1 }} />
+                  <span
+                    className="absolute inset-0 group-hover:opacity-100 opacity-0 transition-opacity duration-200"
+                    style={{ background: "rgba(255,251,245,0.05)", zIndex: -1 }}
+                  />
                 )}
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 {label}
@@ -112,18 +125,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           })}
         </nav>
 
-        <div className="px-4 py-4 border-t border-white/8">
+        {/* User */}
+        <div className="px-4 py-4" style={{ borderTop: "1px solid rgba(255,251,245,0.06)" }}>
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-7 h-7 rounded-full bg-rust/80 flex items-center justify-center flex-shrink-0">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(213,93,39,0.75)" }}
+            >
               <span className="text-cream text-[10px] font-poppins font-bold">{initials}</span>
             </div>
-            <p className="text-xs text-cream/55 font-poppins truncate leading-tight">
-              {displayName}
-            </p>
+            <p className="text-xs text-cream/50 font-poppins truncate leading-tight">{displayName}</p>
           </div>
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-2 text-xs text-cream/30 font-poppins hover:text-cream/70 transition-colors group"
+            className="flex items-center gap-2 text-xs text-cream/25 font-poppins hover:text-cream/60 transition-colors group"
           >
             <LogOut className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             Sign out
@@ -131,7 +146,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto" style={{ backgroundColor: VOID }}>
         {children}
       </main>
     </div>

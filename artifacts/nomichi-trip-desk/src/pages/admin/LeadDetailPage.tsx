@@ -4,16 +4,19 @@ import { supabase } from "@/lib/supabase";
 import type { Lead, CallLog } from "@/lib/types";
 import { LEAD_STATUSES, STATUS_LABELS } from "@/lib/types";
 import { formatCurrency, formatDate, formatDateTime, getStatusBadgeClass } from "@/lib/utils";
-import {
-  ArrowLeft, Phone, Sparkles, Copy, Check, ExternalLink,
-} from "lucide-react";
+import { ArrowLeft, Phone, Sparkles, Copy, Check, ExternalLink } from "lucide-react";
 import ChatBox from "@/components/ChatBox";
 import { apiGet, apiPost, apiPatch } from "@/lib/api";
 
 const vibeFitColors: Record<string, string> = {
-  strong: "border-olive bg-olive/5 text-ink",
-  possible: "border-sand bg-sand/10 text-ink",
-  unlikely: "border-rust/30 bg-rust/5 text-rust",
+  strong:   "border-olive",
+  possible: "border-sand/60",
+  unlikely: "border-rust/50",
+};
+const vibeFitBg: Record<string, string> = {
+  strong:   "rgba(69,71,29,0.12)",
+  possible: "rgba(209,183,136,0.08)",
+  unlikely: "rgba(213,93,39,0.07)",
 };
 
 export default function LeadDetailPage() {
@@ -56,11 +59,7 @@ export default function LeadDetailPage() {
         supabase.from("profiles").select("id, full_name, email").order("full_name"),
       ]);
 
-      if (!leadData) {
-        setLocation("/admin/leads");
-        return;
-      }
-
+      if (!leadData) { setLocation("/admin/leads"); return; }
       setLead(leadData as any);
       setStatus(leadData.status);
       setOwnerId((leadData as any).owner_id ?? "");
@@ -73,37 +72,24 @@ export default function LeadDetailPage() {
 
   async function updateStatus(newStatus: string) {
     const res = await apiPatch(`/api/leads/${leadId}`, { status: newStatus });
-    if (res.ok) {
-      setStatus(newStatus);
-    }
+    if (res.ok) setStatus(newStatus);
   }
 
   async function updateOwner(newOwnerId: string) {
     const res = await apiPatch(`/api/leads/${leadId}`, { owner_id: newOwnerId || null });
-    if (res.ok) {
-      setOwnerId(newOwnerId);
-    }
+    if (res.ok) setOwnerId(newOwnerId);
   }
 
   async function addCallLog() {
-    if (!note.trim()) {
-      setLogError("Add a note about the call");
-      return;
-    }
-    setAddingLog(true);
-    setLogError("");
-
+    if (!note.trim()) { setLogError("Add a note about the call"); return; }
+    setAddingLog(true); setLogError("");
     const res = await apiPost("/api/call-logs", {
-      lead_id: leadId,
-      note: note.trim(),
-      next_action: nextAction.trim() || null,
+      lead_id: leadId, note: note.trim(), next_action: nextAction.trim() || null,
     });
-
     if (res.ok) {
       const newLog = await res.json();
       setCallLogs([newLog, ...callLogs]);
-      setNote("");
-      setNextAction("");
+      setNote(""); setNextAction("");
     } else {
       setLogError("Could not save the note. Try again.");
     }
@@ -142,30 +128,30 @@ export default function LeadDetailPage() {
 
   if (loading || !lead) {
     return (
-      <div className="p-8 flex items-center justify-center">
-        <p className="text-ink/40 font-poppins text-sm">Loading…</p>
+      <div className="p-8 flex items-center justify-center min-h-screen">
+        <span className="w-6 h-6 border-2 rounded-full" style={{ borderColor: "rgba(255,251,245,0.15)", borderTopColor: "#D55D27", animation: "spin 0.7s linear infinite" }} />
       </div>
     );
   }
 
   const trip = (lead as any).trips;
+  const sectionLabel = "text-xs uppercase tracking-wider font-poppins text-cream/40 font-medium";
+  const divider = { borderTop: "1px solid rgba(255,251,245,0.07)" };
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <Link href="/admin/leads" className="flex items-center gap-2 text-sm text-ink/50 font-poppins hover:text-ink transition-colors mb-4">
-          <ArrowLeft className="w-4 h-4" />
-          Back to leads
+      {/* Back + header */}
+      <div className="mb-7">
+        <Link href="/admin/leads" className="flex items-center gap-2 text-sm text-cream/40 font-poppins hover:text-cream transition-colors mb-4 w-fit underline-anim">
+          <ArrowLeft className="w-4 h-4" /> Back to leads
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold text-ink">{lead.name}</h1>
+            <h1 className="text-3xl font-display font-bold text-cream">{lead.name}</h1>
             <div className="flex items-center gap-3 mt-1">
-              <a href={`mailto:${lead.email}`} className="text-sm text-ink/50 font-poppins hover:text-ink transition-colors">
-                {lead.email}
-              </a>
-              <span className="text-ink/20">·</span>
-              <span className="text-sm text-ink/50 font-poppins">{lead.phone}</span>
+              <a href={`mailto:${lead.email}`} className="text-sm text-cream/45 font-poppins hover:text-cream transition-colors">{lead.email}</a>
+              <span className="text-cream/15">·</span>
+              <span className="text-sm text-cream/45 font-poppins">{lead.phone}</span>
             </div>
           </div>
           <span className={getStatusBadgeClass(lead.status as any)}>
@@ -174,81 +160,71 @@ export default function LeadDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Left col */}
+        <div className="lg:col-span-2 space-y-5">
+          {/* Trip */}
           {trip && (
             <div className="card">
-              <h2 className="text-xs uppercase tracking-wider font-poppins text-ink/50 font-medium mb-3">
-                Trip
-              </h2>
-              <p className="font-display font-bold text-xl text-ink">{trip.name}</p>
-              <p className="text-sm text-ink/60 font-poppins mt-1">
-                {trip.destination} &middot; {formatDate(trip.start_date)} to {formatDate(trip.end_date)} &middot;{" "}
-                {formatCurrency(trip.price_gst)} incl. GST
+              <h2 className={`${sectionLabel} mb-3`}>Trip</h2>
+              <p className="font-display font-bold text-xl text-cream">{trip.name}</p>
+              <p className="text-sm text-cream/50 font-poppins mt-1">
+                {trip.destination} · {formatDate(trip.start_date)} to {formatDate(trip.end_date)} · {formatCurrency(trip.price_gst)} incl. GST
               </p>
               {trip.description && (
-                <p className="text-sm text-ink/70 font-poppins mt-3 leading-relaxed">{trip.description}</p>
+                <p className="text-sm text-cream/60 font-poppins mt-3 leading-relaxed">{trip.description}</p>
               )}
             </div>
           )}
 
+          {/* Enquiry details */}
           <div className="card">
-            <h2 className="text-xs uppercase tracking-wider font-poppins text-ink/50 font-medium mb-3">
-              Enquiry details
-            </h2>
-            <dl className="space-y-2">
-              <div className="flex justify-between">
-                <dt className="text-sm text-ink/50 font-poppins">Group type</dt>
-                <dd className="text-sm text-ink font-poppins capitalize">{lead.group_type}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-ink/50 font-poppins">Preferred month</dt>
-                <dd className="text-sm text-ink font-poppins">{lead.preferred_month}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-ink/50 font-poppins">Enquired</dt>
-                <dd className="text-sm text-ink font-poppins">{formatDate(lead.created_at)}</dd>
-              </div>
+            <h2 className={`${sectionLabel} mb-3`}>Enquiry details</h2>
+            <dl className="space-y-2.5">
+              {[
+                ["Group type", lead.group_type],
+                ["Preferred month", lead.preferred_month],
+                ["Enquired", formatDate(lead.created_at)],
+              ].map(([dt, dd]) => (
+                <div key={dt} className="flex justify-between">
+                  <dt className="text-sm text-cream/45 font-poppins">{dt}</dt>
+                  <dd className="text-sm text-cream font-poppins capitalize">{dd}</dd>
+                </div>
+              ))}
             </dl>
-            <div className="mt-4 pt-4 border-t border-sand/30">
-              <p className="text-xs text-ink/50 font-poppins uppercase tracking-wider mb-2">What they hope the trip feels like</p>
-              <p className="text-sm text-ink font-poppins leading-relaxed italic">"{lead.vibe_text}"</p>
+            <div className="mt-4 pt-4" style={divider}>
+              <p className={`${sectionLabel} mb-2`}>What they hope the trip feels like</p>
+              <p className="text-sm text-cream/70 font-poppins leading-relaxed italic">"{lead.vibe_text}"</p>
             </div>
           </div>
 
-          <div className="card space-y-4">
-            <h2 className="text-xs uppercase tracking-wider font-poppins text-ink/50 font-medium">
-              AI tools
-            </h2>
+          {/* AI tools */}
+          <div className="card space-y-5">
+            <h2 className={sectionLabel}>AI tools</h2>
 
+            {/* WhatsApp draft */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-ink font-poppins">WhatsApp draft</p>
+                <p className="text-sm font-medium text-cream font-poppins">WhatsApp draft</p>
                 <button
                   onClick={fetchWhatsappDraft}
                   disabled={aiLoading === "whatsapp"}
                   className="flex items-center gap-1.5 text-xs text-rust font-poppins hover:text-olive disabled:opacity-50 transition-colors"
                 >
                   <Sparkles className="w-3 h-3" />
-                  {aiLoading === "whatsapp" ? "Drafting..." : "Draft"}
+                  {aiLoading === "whatsapp" ? "Drafting…" : "Draft"}
                 </button>
               </div>
               {whatsappDraft && (
-                <div className="bg-olive/5 border border-olive/20 px-4 py-3 relative">
-                  <p className="text-sm text-ink font-poppins leading-relaxed pr-8">
-                    {whatsappDraft}
-                  </p>
+                <div className="px-4 py-3 relative border-l-2 border-olive" style={{ background: "rgba(69,71,29,0.12)" }}>
+                  <p className="text-sm text-cream/80 font-poppins leading-relaxed pr-8">{whatsappDraft}</p>
                   <button
                     onClick={() => copyToClipboard(whatsappDraft)}
-                    className="absolute top-3 right-3 text-ink/30 hover:text-ink/60 transition-colors"
+                    className="absolute top-3 right-3 text-cream/30 hover:text-cream/60 transition-colors"
                   >
-                    {copied ? (
-                      <Check className="w-3.5 h-3.5 text-olive" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
+                    {copied ? <Check className="w-3.5 h-3.5 text-olive" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
-                  <div className="mt-3 pt-3 border-t border-olive/15 flex items-center gap-3">
+                  <div className="mt-3 pt-3 flex items-center gap-3" style={divider}>
                     <a
                       href={`https://wa.me/91${lead.phone}?text=${encodeURIComponent(whatsappDraft)}`}
                       target="_blank"
@@ -256,62 +232,64 @@ export default function LeadDetailPage() {
                       className="inline-flex items-center gap-1.5 text-xs font-poppins text-olive font-medium hover:underline"
                     >
                       <ExternalLink className="w-3 h-3" />
-                      Open in WhatsApp with this message
+                      Open in WhatsApp
                     </a>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="border-t border-sand/30 pt-4">
+            {/* Log summary */}
+            <div className="pt-4" style={divider}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-ink font-poppins">Call log summary</p>
+                <p className="text-sm font-medium text-cream font-poppins">Call log summary</p>
                 <button
                   onClick={fetchLogSummary}
                   disabled={aiLoading === "summary"}
                   className="flex items-center gap-1.5 text-xs text-rust font-poppins hover:text-olive disabled:opacity-50 transition-colors"
                 >
                   <Sparkles className="w-3 h-3" />
-                  {aiLoading === "summary" ? "Summarising..." : "Summarise"}
+                  {aiLoading === "summary" ? "Summarising…" : "Summarise"}
                 </button>
               </div>
               {logSummary && (
-                <p className="text-sm text-ink/70 font-poppins bg-sand/10 px-4 py-3 border-l-2 border-rust italic">
+                <p className="text-sm text-cream/65 font-poppins px-4 py-3 border-l-2 border-rust italic" style={{ background: "rgba(213,93,39,0.07)" }}>
                   {logSummary}
                 </p>
               )}
             </div>
 
-            <div className="border-t border-sand/30 pt-4">
+            {/* Vibe fit */}
+            <div className="pt-4" style={divider}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-ink font-poppins">Vibe fit suggestion</p>
+                <p className="text-sm font-medium text-cream font-poppins">Vibe fit suggestion</p>
                 <button
                   onClick={fetchVibeFit}
                   disabled={aiLoading === "vibe"}
                   className="flex items-center gap-1.5 text-xs text-rust font-poppins hover:text-olive disabled:opacity-50 transition-colors"
                 >
                   <Sparkles className="w-3 h-3" />
-                  {aiLoading === "vibe" ? "Reading..." : "Assess fit"}
+                  {aiLoading === "vibe" ? "Reading…" : "Assess fit"}
                 </button>
               </div>
               {vibeFit && (
-                <div className={`border px-4 py-3 ${vibeFitColors[vibeFit.fit] ?? ""}`}>
-                  <p className="text-xs font-medium uppercase tracking-wider font-poppins mb-1 capitalize">
+                <div
+                  className={`border px-4 py-3 ${vibeFitColors[vibeFit.fit] ?? "border-cream/15"}`}
+                  style={{ background: vibeFitBg[vibeFit.fit] ?? "rgba(255,251,245,0.03)" }}
+                >
+                  <p className="text-xs font-medium uppercase tracking-wider font-poppins mb-1 capitalize text-cream/80">
                     {vibeFit.fit} fit
                   </p>
-                  <p className="text-sm font-poppins leading-relaxed">{vibeFit.reason}</p>
-                  <p className="text-xs text-ink/30 font-poppins mt-2">
-                    Suggestion only. The call is yours to make.
-                  </p>
+                  <p className="text-sm font-poppins leading-relaxed text-cream/70">{vibeFit.reason}</p>
+                  <p className="text-xs text-cream/25 font-poppins mt-2">Suggestion only. The call is yours to make.</p>
                 </div>
               )}
             </div>
           </div>
 
+          {/* Call log */}
           <div className="card">
-            <h2 className="text-xs uppercase tracking-wider font-poppins text-ink/50 font-medium mb-4">
-              Call log
-            </h2>
+            <h2 className={`${sectionLabel} mb-4`}>Call log</h2>
 
             <div className="mb-5 space-y-3">
               <textarea
@@ -328,36 +306,31 @@ export default function LeadDetailPage() {
                 className="input-base text-sm"
                 placeholder="Next action (optional)"
               />
-              {logError && (
-                <p className="text-rust text-xs font-poppins">{logError}</p>
-              )}
+              {logError && <p className="text-rust text-xs font-poppins">{logError}</p>}
               <button
                 onClick={addCallLog}
                 disabled={addingLog}
-                className="btn-primary text-sm py-2 px-5 disabled:opacity-50"
+                className="btn-primary text-sm py-2 px-5 disabled:opacity-50 flex items-center gap-2"
               >
-                <Phone className="w-3.5 h-3.5 inline mr-1.5" />
-                {addingLog ? "Saving..." : "Add log entry"}
+                <Phone className="w-3.5 h-3.5" />
+                {addingLog ? "Saving…" : "Add log entry"}
               </button>
             </div>
 
             {callLogs.length === 0 ? (
-              <p className="text-sm text-ink/30 font-poppins italic">
+              <p className="text-sm text-cream/25 font-poppins italic">
                 No call log entries yet. Add one after each touchpoint.
               </p>
             ) : (
               <div className="space-y-4">
                 {callLogs.map((log: any) => (
-                  <div key={log.id} className="border-l-2 border-sand pl-4">
-                    <p className="text-sm text-ink font-poppins leading-relaxed">{log.note}</p>
+                  <div key={log.id} className="border-l-2 pl-4" style={{ borderLeftColor: "rgba(213,93,39,0.4)" }}>
+                    <p className="text-sm text-cream/80 font-poppins leading-relaxed">{log.note}</p>
                     {log.next_action && (
-                      <p className="text-xs text-rust font-poppins mt-1">
-                        Next: {log.next_action}
-                      </p>
+                      <p className="text-xs text-rust font-poppins mt-1">Next: {log.next_action}</p>
                     )}
-                    <p className="text-xs text-ink/30 font-poppins mt-1.5">
-                      {log.created_by_profile?.full_name ?? log.created_by_profile?.email ?? "Team"} &middot;{" "}
-                      {formatDateTime(log.created_at)}
+                    <p className="text-xs text-cream/25 font-poppins mt-1.5">
+                      {log.created_by_profile?.full_name ?? log.created_by_profile?.email ?? "Team"} · {formatDateTime(log.created_at)}
                     </p>
                   </div>
                 ))}
@@ -366,20 +339,20 @@ export default function LeadDetailPage() {
           </div>
         </div>
 
+        {/* Right col */}
         <div className="space-y-5">
+          {/* Pipeline */}
           <div className="card">
-            <h2 className="text-xs uppercase tracking-wider font-poppins text-ink/50 font-medium mb-3">
-              Move pipeline
-            </h2>
-            <div className="space-y-1.5">
+            <h2 className={`${sectionLabel} mb-3`}>Move pipeline</h2>
+            <div className="space-y-1">
               {LEAD_STATUSES.map((s) => (
                 <button
                   key={s}
                   onClick={() => updateStatus(s)}
-                  className={`w-full text-left px-3 py-2 text-sm font-poppins transition-colors ${
+                  className={`w-full text-left px-3 py-2.5 text-sm font-poppins transition-colors ${
                     status === s
                       ? "bg-rust text-cream font-medium"
-                      : "text-ink/60 hover:bg-sand/20 hover:text-ink"
+                      : "text-cream/50 hover:text-cream hover:bg-cream/6"
                   }`}
                 >
                   {STATUS_LABELS[s]}
@@ -388,10 +361,9 @@ export default function LeadDetailPage() {
             </div>
           </div>
 
+          {/* Owner */}
           <div className="card">
-            <h2 className="text-xs uppercase tracking-wider font-poppins text-ink/50 font-medium mb-3">
-              Owner
-            </h2>
+            <h2 className={`${sectionLabel} mb-3`}>Owner</h2>
             <select
               value={ownerId}
               onChange={(e) => updateOwner(e.target.value)}
@@ -399,25 +371,15 @@ export default function LeadDetailPage() {
             >
               <option value="">Unassigned</option>
               {profiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name ?? p.email}
-                </option>
+                <option key={p.id} value={p.id}>{p.full_name ?? p.email}</option>
               ))}
             </select>
           </div>
 
+          {/* Chat */}
           <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs uppercase tracking-wider font-poppins text-ink/50 font-medium">
-                Chat with lead
-              </h2>
-            </div>
-            <ChatBox
-              leadId={leadId}
-              leadName={lead.name}
-              isAdmin={true}
-              height="h-72"
-            />
+            <h2 className={`${sectionLabel} mb-4`}>Chat with lead</h2>
+            <ChatBox leadId={leadId} leadName={lead.name} isAdmin={true} height="h-72" />
           </div>
         </div>
       </div>
