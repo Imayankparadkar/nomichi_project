@@ -1,0 +1,1 @@
+- [Nomichi Trip Desk migration](nomichi-migration.md) — Next.js → React+Vite+Express migration; env var naming, secrets setup, and stack decisions.
