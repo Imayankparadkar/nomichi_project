@@ -11,13 +11,6 @@ function getSupabaseAdmin() {
   return createClient(url, serviceKey, { auth: { persistSession: false } });
 }
 
-function getSupabaseAnon(authHeader?: string) {
-  const url = process.env.SUPABASE_URL!;
-  const anonKey = process.env.SUPABASE_ANON_KEY!;
-  const client = createClient(url, anonKey, { auth: { persistSession: false } });
-  return client;
-}
-
 async function getAuthedUser(authHeader?: string) {
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
   const token = authHeader.split(" ")[1];
@@ -25,6 +18,29 @@ async function getAuthedUser(authHeader?: string) {
   const anonKey = process.env.SUPABASE_ANON_KEY!;
   const client = createClient(url, anonKey, { auth: { persistSession: false } });
   const { data: { user } } = await client.auth.getUser(token);
+  return user;
+}
+
+async function requireTeamMember(
+  req: import("express").Request,
+  res: import("express").Response,
+): Promise<import("@supabase/supabase-js").User | null> {
+  const user = await getAuthedUser(req.headers.authorization);
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return null;
+  }
+  const admin = getSupabaseAdmin();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || !["admin", "associate"].includes(profile.role)) {
+    res.status(403).json({ error: "Forbidden: team access only" });
+    return null;
+  }
   return user;
 }
 
@@ -66,8 +82,8 @@ router.post("/leads", async (req, res) => {
 });
 
 router.get("/leads", async (req, res) => {
-  const user = await getAuthedUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
 
   const admin = getSupabaseAdmin();
   let query = admin
@@ -91,8 +107,8 @@ const updateLeadSchema = z.object({
 });
 
 router.patch("/leads/:id", async (req, res) => {
-  const user = await getAuthedUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
 
   const { id } = req.params;
   const parsed = updateLeadSchema.safeParse(req.body);
@@ -132,8 +148,8 @@ router.patch("/leads/:id", async (req, res) => {
 });
 
 router.get("/leads/:id", async (req, res) => {
-  const user = await getAuthedUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
 
   const { id } = req.params;
   const admin = getSupabaseAdmin();
@@ -163,8 +179,8 @@ const updateTripSchema = z.object({
 });
 
 router.patch("/trips/:id", async (req, res) => {
-  const user = await getAuthedUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
 
   const { id } = req.params;
   const parsed = updateTripSchema.safeParse(req.body);
@@ -177,8 +193,8 @@ router.patch("/trips/:id", async (req, res) => {
 });
 
 router.delete("/trips/:id", async (req, res) => {
-  const user = await getAuthedUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
 
   const { id } = req.params;
   const admin = getSupabaseAdmin();
@@ -196,8 +212,8 @@ const callLogSchema = z.object({
 });
 
 router.post("/call-logs", async (req, res) => {
-  const user = await getAuthedUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
 
   const parsed = callLogSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Validation failed" });
@@ -298,8 +314,8 @@ function getGemini() {
 }
 
 router.post("/ai/whatsapp-draft", async (req, res) => {
-  const user = await getAuthedUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
 
   const { lead_id } = req.body;
   const admin = getSupabaseAdmin();
@@ -333,8 +349,8 @@ Write a warm, short WhatsApp opening message (3-4 sentences max). Reference some
 });
 
 router.post("/ai/summarize-log", async (req, res) => {
-  const user = await getAuthedUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
 
   const { lead_id } = req.body;
   const admin = getSupabaseAdmin();
@@ -372,8 +388,8 @@ Write exactly one sentence (max 30 words) covering: where things stand + what to
 });
 
 router.post("/ai/vibe-check", async (req, res) => {
-  const user = await getAuthedUser(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
 
   const { lead_id } = req.body;
   const admin = getSupabaseAdmin();

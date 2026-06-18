@@ -51,7 +51,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  if (!user) return null;
+  if (!user) {
+    setLocation("/admin/login");
+    return null;
+  }
 
   async function handleSignOut() {
     await signOut();
