@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { Trip } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { MapPin, Calendar, Users } from "lucide-react";
+import { MapPin, Calendar, Users, ArrowUpRight } from "lucide-react";
 
 interface Props {
   trip: Trip;
@@ -12,6 +12,7 @@ interface Props {
 export default function TripCard({ trip, onEnquire, index = 0 }: Props) {
   const spotsLeft = trip.seats_available;
   const almostFull = spotsLeft > 0 && spotsLeft <= 3;
+  const isFull = spotsLeft === 0;
   const cardRef = useRef<HTMLDivElement>(null);
   const [spot, setSpot] = useState({ x: -999, y: -999 });
 
@@ -30,46 +31,48 @@ export default function TripCard({ trip, onEnquire, index = 0 }: Props) {
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="spotlight-card border border-sand/50 bg-cream flex flex-col hover:border-rust/50 transition-all duration-350 group hover:shadow-[0_12px_40px_rgba(213,93,39,0.10)] hover:-translate-y-1.5 animate-fade-up"
+      className="spotlight-card group relative flex flex-col cursor-default transition-all duration-350 animate-fade-up hover:-translate-y-1"
       style={{
-        animationDelay: `${index * 90}ms`,
+        animationDelay: `${index * 80}ms`,
+        background: "rgba(255,251,245,0.04)",
+        border: "1px solid rgba(255,251,245,0.08)",
         "--spot-x": `${spot.x}px`,
         "--spot-y": `${spot.y}px`,
+        boxShadow: spot.x > 0 ? "0 0 0 1px rgba(213,93,39,0.18), 0 16px 48px rgba(0,0,0,0.35)" : "0 8px 32px rgba(0,0,0,0.3)",
+        transition: "box-shadow 0.3s, transform 0.3s",
       } as React.CSSProperties}
     >
+      {/* Header band */}
       <div
-        className="px-6 py-5 border-b border-sand/30 relative z-10"
+        className="px-6 py-5 border-b relative z-10"
         style={{
-          background:
-            "linear-gradient(135deg, rgba(69,71,29,0.055) 0%, rgba(213,93,39,0.035) 100%)",
+          borderColor: "rgba(255,251,245,0.07)",
+          background: "linear-gradient(135deg, rgba(69,71,29,0.18) 0%, rgba(213,93,39,0.08) 100%)",
         }}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-display font-bold text-xl text-ink leading-tight group-hover:text-rust transition-colors duration-300">
+            <h2 className="font-display font-bold text-xl text-cream leading-tight group-hover:text-rust transition-colors duration-300">
               {trip.name}
             </h2>
             <div className="flex items-center gap-1.5 mt-1.5">
               <MapPin className="w-3 h-3 text-rust" />
-              <span className="text-sm text-ink/60 font-poppins">{trip.destination}</span>
+              <span className="text-sm text-cream/50 font-poppins">{trip.destination}</span>
             </div>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="font-display font-bold text-2xl text-rust">
-              {formatCurrency(trip.price_gst)}
-            </p>
-            <p className="text-xs text-ink/40 font-poppins">incl. GST</p>
+            <p className="font-display font-bold text-2xl text-rust">{formatCurrency(trip.price_gst)}</p>
+            <p className="text-xs text-cream/25 font-poppins">incl. GST</p>
           </div>
         </div>
       </div>
 
-      <div className="px-6 py-4 flex-1 flex flex-col relative z-10">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-4 text-xs text-ink/60 font-poppins">
+      {/* Body */}
+      <div className="px-6 py-5 flex-1 flex flex-col relative z-10">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5 text-xs text-cream/40 font-poppins">
           <div className="flex items-center gap-1.5">
             <Calendar className="w-3 h-3" />
-            <span>
-              {formatDate(trip.start_date)} — {formatDate(trip.end_date)}
-            </span>
+            <span>{formatDate(trip.start_date)} — {formatDate(trip.end_date)}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Users className="w-3 h-3" />
@@ -77,27 +80,30 @@ export default function TripCard({ trip, onEnquire, index = 0 }: Props) {
           </div>
         </div>
 
-        <p className="text-sm text-ink/70 font-poppins leading-relaxed flex-1">
+        <p className="text-sm text-cream/55 font-poppins leading-relaxed flex-1">
           {trip.description}
         </p>
 
-        <div className="mt-5 flex items-center justify-between">
+        {/* Footer row */}
+        <div className="mt-6 flex items-center justify-between">
           {almostFull ? (
             <span className="flex items-center gap-1.5 text-xs text-rust font-semibold font-poppins uppercase tracking-wider">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-rust animate-pulse" />
               {spotsLeft} {spotsLeft === 1 ? "spot" : "spots"} left
             </span>
-          ) : spotsLeft === 0 ? (
-            <span className="text-xs text-ink/40 font-poppins uppercase tracking-wider">Full</span>
+          ) : isFull ? (
+            <span className="text-xs text-cream/25 font-poppins uppercase tracking-wider">Full</span>
           ) : (
-            <span className="text-xs text-ink/40 font-poppins">{spotsLeft} spots open</span>
+            <span className="text-xs text-cream/30 font-poppins">{spotsLeft} spots open</span>
           )}
 
           <button
             onClick={() => onEnquire(trip)}
-            className="btn-primary btn-shimmer text-sm py-2.5"
+            disabled={isFull}
+            className="btn-primary btn-shimmer flex items-center gap-2 text-sm py-2.5 px-5 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Send enquiry
+            <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

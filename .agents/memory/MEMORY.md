@@ -1,1 +1,1 @@
-- [Nomichi Trip Desk migration](nomichi-migration.md) — Next.js → React+Vite+Express migration; env var naming, secrets setup, and stack decisions.
+- [Public page routing](public-page-routing.md) — App.tsx imports from @/pages/PublicPage.tsx not @/components/public/PublicPage.tsx
