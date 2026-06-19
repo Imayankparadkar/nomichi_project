@@ -3,6 +3,8 @@ import { supabase } from "@/lib/supabase";
 import type { LeadStatus } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+import { exportDashboardPdf } from "@/lib/exportPdf";
+import { Download } from "lucide-react";
 
 const statusColors: Record<LeadStatus, string> = {
   NEW: "bg-yellow",
@@ -74,6 +76,7 @@ export default function DashboardPage() {
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [barsVisible, setBarsVisible] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const barsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,9 +112,18 @@ export default function DashboardPage() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning." : hour < 17 ? "Good afternoon." : "Good evening.";
 
+  async function handleExportPdf() {
+    setExporting(true);
+    try {
+      await exportDashboardPdf({ leads, trips, byStatus, byTrip, recentLeads });
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-screen">
+      <div className="w-full flex items-center justify-center min-h-screen p-8">
         <div className="flex flex-col items-center gap-3">
           <span
             className="w-6 h-6 border-2 rounded-full inline-block"
@@ -124,22 +136,37 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      {/* Greeting */}
-      <div className="mb-9 animate-fade-up">
-        <h1 className="text-3xl font-display font-bold text-cream">{greeting}</h1>
-        <p className="text-cream/40 font-poppins mt-1 text-sm">Here is where things stand.</p>
+    <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "2.5rem 2rem" }}>
+      {/* Greeting + Export button */}
+      <div className="mb-9 animate-fade-up flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-display font-bold text-cream">{greeting}</h1>
+          <p className="text-cream/40 font-poppins mt-1 text-sm">Here is where things stand.</p>
+        </div>
+        <button
+          onClick={handleExportPdf}
+          disabled={exporting || loading}
+          className="btn-secondary flex items-center gap-2 text-sm py-2 px-4 disabled:opacity-40 flex-shrink-0"
+          title="Export dashboard as PDF"
+        >
+          {exporting ? (
+            <span className="w-3.5 h-3.5 border-2 rounded-full inline-block" style={{ borderColor: "rgba(255,251,245,0.2)", borderTopColor: "#D55D27", animation: "spin 0.7s linear infinite" }} />
+          ) : (
+            <Download className="w-3.5 h-3.5" />
+          )}
+          {exporting ? "Generating…" : "Export PDF"}
+        </button>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard label="Total Leads" value={totalLeads} color="text-cream" delay={60} />
         <StatCard label="Confirmed" value={byStatus["CONFIRMED"] ?? 0} color="text-olive" delay={130} />
         <StatCard label="Open Trips" value={trips.filter((t) => t.status === "open").length} color="text-rust" delay={200} />
       </div>
 
       {/* Pipeline + Leads by trip */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="card animate-fade-up" style={{ animationDelay: "260ms" }}>
           <h2 className="text-base font-display font-bold text-cream mb-5">Pipeline</h2>
           <div className="space-y-4" ref={barsRef}>
@@ -191,7 +218,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent enquiries */}
-      <div className="card animate-fade-up" style={{ animationDelay: "370ms" }}>
+      <div className="card animate-fade-up mt-2" style={{ animationDelay: "370ms" }}>
         <h2 className="text-base font-display font-bold text-cream mb-5">Recent enquiries</h2>
         {recentLeads.length === 0 ? (
           <p className="text-sm text-cream/30 font-poppins">No leads yet. They will show up here.</p>

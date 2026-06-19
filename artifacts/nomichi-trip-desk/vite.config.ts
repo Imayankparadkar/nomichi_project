@@ -28,6 +28,7 @@ if (!basePath) {
 
 export default defineConfig({
   base: basePath,
+  envDir: path.resolve(import.meta.dirname, "../.."),
   plugins: [
     react(),
     tailwindcss(),
@@ -65,6 +66,12 @@ export default defineConfig({
     allowedHosts: true,
     fs: {
       strict: true,
+    },
+    proxy: {
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
     },
   },
   preview: {

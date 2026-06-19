@@ -66,7 +66,7 @@ export default function LeadsPage() {
   const hasFilters = statusFilter || tripFilter || ownerFilter || search;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "2.5rem 2rem" }}>
       {/* Header */}
       <div className="mb-7 flex items-center justify-between">
         <div>
@@ -78,7 +78,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-7">
+      <div className="flex flex-wrap gap-3 mb-8">
         <form onSubmit={handleSearch} className="flex">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cream/35 pointer-events-none" />

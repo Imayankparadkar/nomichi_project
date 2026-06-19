@@ -20,16 +20,45 @@
   --font-display: 'Playfair Display', serif;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-  font-family: var(--font-poppins);
-  background-color: #0D0C0B;
-  color: #FFFBF5;
-  -webkit-font-smoothing: antialiased;
+  html {
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-poppins);
+    background-color: #0D0C0B;
+    color: #FFFBF5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3 { font-family: var(--font-display); }
 }
 
-h1, h2, h3 { font-family: var(--font-display); }
+/* Reliable centered container — NOT in a layer so it beats Tailwind base but Tailwind utilities still win */
+.page-container {
+  width: 100%;
+  max-width: 80rem;       /* 1280px = 7xl */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 2rem;     /* 32px */
+  padding-right: 2rem;
+}
+
+
 
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
@@ -238,25 +267,23 @@ h1, h2, h3 { font-family: var(--font-display); }
   padding: 1.5rem;
 }
 
-@layer components {
-  /* Buttons */
-  .btn-primary {
-    @apply bg-rust text-cream px-6 py-3 font-medium rounded-none hover:bg-olive transition-all duration-300 font-poppins tracking-wide cursor-pointer;
-  }
-  .btn-secondary {
-    @apply border border-cream/25 text-cream px-6 py-3 font-medium rounded-none hover:bg-cream/8 transition-all duration-300 font-poppins tracking-wide cursor-pointer;
-  }
-  .btn-ghost {
-    @apply text-cream/55 px-4 py-2 font-medium hover:text-cream transition-colors duration-200 font-poppins cursor-pointer;
-  }
-
-  /* Status badges */
-  .badge-new            { @apply bg-yellow text-ink text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
-  .badge-contacted      { @apply bg-sand text-ink text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
-  .badge-qualified      { @apply bg-olive text-cream text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
-  .badge-vibe           { @apply bg-rust text-cream text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
-  .badge-confirmed      { @apply bg-cream/20 text-cream text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block border border-cream/25; }
-  .badge-not-fit        { @apply bg-cream/6 text-cream/45 text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block border border-cream/10; }
-  .badge-vibe-check-sent { @apply bg-rust text-cream text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
-  .badge-not-a-fit      { @apply bg-cream/6 text-cream/45 text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block border border-cream/10; }
+/* Buttons */
+.btn-primary {
+  @apply bg-rust text-cream px-6 py-3 font-medium rounded-none hover:bg-olive transition-all duration-300 font-poppins tracking-wide cursor-pointer;
 }
+.btn-secondary {
+  @apply border border-cream/25 text-cream px-6 py-3 font-medium rounded-none hover:bg-cream/8 transition-all duration-300 font-poppins tracking-wide cursor-pointer;
+}
+.btn-ghost {
+  @apply text-cream/55 px-4 py-2 font-medium hover:text-cream transition-colors duration-200 font-poppins cursor-pointer;
+}
+
+/* Status badges */
+.badge-new            { @apply bg-yellow text-ink text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
+.badge-contacted      { @apply bg-sand text-ink text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
+.badge-qualified      { @apply bg-olive text-cream text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
+.badge-vibe           { @apply bg-rust text-cream text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
+.badge-confirmed      { @apply bg-cream/20 text-cream text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block border border-cream/25; }
+.badge-not-fit        { @apply bg-cream/6 text-cream/45 text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block border border-cream/10; }
+.badge-vibe-check-sent { @apply bg-rust text-cream text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block; }
+.badge-not-a-fit      { @apply bg-cream/6 text-cream/45 text-xs font-semibold px-2 py-0.5 font-poppins uppercase tracking-wider inline-block border border-cream/10; }

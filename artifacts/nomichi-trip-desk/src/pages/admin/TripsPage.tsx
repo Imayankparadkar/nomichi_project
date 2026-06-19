@@ -106,7 +106,7 @@ export default function TripsPage() {
   const errClass = "text-rust text-xs mt-1 font-poppins";
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "2.5rem 2rem" }}>
       {/* Header */}
       <div className="mb-7 flex items-center justify-between">
         <div>

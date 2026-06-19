@@ -1,6 +1,23 @@
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+import { config } from "dotenv";
 import app from "./app";
 import { logger } from "./lib/logger";
 
+// Load .env from project root (dist/ -> api-server -> artifacts -> project root)
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = resolve(__dirname, "..", "..", "..", ".env");
+const result = config({ path: envPath, override: true });
+if (result.error) {
+  // fallback — env vars may already be loaded
+  logger.warn("dotenv: could not load .env file, using existing env vars");
+} else {
+  // Trim all loaded values to strip Windows \r characters
+  for (const key of Object.keys(result.parsed ?? {})) {
+    const val = process.env[key];
+    if (val) process.env[key] = val.trim();
+  }
+}
 const rawPort = process.env["PORT"];
 
 if (!rawPort) {

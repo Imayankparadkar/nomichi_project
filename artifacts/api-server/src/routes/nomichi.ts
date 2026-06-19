@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createClient } from "@supabase/supabase-js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { z } from "zod";
 
 const router = Router();
@@ -281,7 +281,7 @@ router.get("/status", async (req, res) => {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
     .from("leads")
-    .select("id, status, preferred_month, created_at, trips(name, destination, start_date, end_date)")
+    .select("id, name, status, preferred_month, created_at, trips(name, destination, start_date, end_date)")
     .eq("phone", phone)
     .order("created_at", { ascending: false })
     .limit(5);
@@ -291,6 +291,7 @@ router.get("/status", async (req, res) => {
 
   const enquiries = data.map((lead: any) => ({
     id: lead.id,
+    name: lead.name,
     status: lead.status,
     preferred_month: lead.preferred_month,
     created_at: lead.created_at,
@@ -307,17 +308,45 @@ router.get("/status", async (req, res) => {
 
 // ─── AI ───────────────────────────────────────────────────────────────────────
 
-function getGemini() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY not set");
-  return new GoogleGenerativeAI(apiKey);
+function getGroq() {
+  const apiKey = process.env.GROQ_API_KEY?.trim(); // trim strips Windows \r from --env-file
+  if (!apiKey) throw new Error("GROQ_API_KEY not set");
+  return new Groq({ apiKey });
 }
+
+async function groqChat(prompt: string): Promise<string> {
+  const client = getGroq();
+  const completion = await client.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.7,
+    max_tokens: 512,
+  });
+  return completion.choices[0]?.message?.content ?? "";
+}
+
+router.get("/ai/check-key", async (req, res) => {
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
+
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    return res.json({ working: false, error: "GROQ_API_KEY is not set in the environment (.env file)." });
+  }
+
+  try {
+    await groqChat("Hi");
+    res.json({ working: true });
+  } catch (err: any) {
+    res.json({ working: false, error: err.message || "Failed to connect to Groq API." });
+  }
+});
 
 router.post("/ai/whatsapp-draft", async (req, res) => {
   const user = await requireTeamMember(req, res);
   if (!user) return;
 
-  const { lead_id } = req.body;
+  const { lead_id, message_type = "intro", custom_context = "" } = req.body;
   const admin = getSupabaseAdmin();
   const { data: lead } = await admin.from("leads").select("*, trips(name, destination, start_date, end_date)").eq("id", lead_id).single();
   if (!lead) return res.status(404).json({ error: "Lead not found" });
@@ -326,8 +355,17 @@ router.post("/ai/whatsapp-draft", async (req, res) => {
   const tripDates = trip ? `${formatDate(trip.start_date)} to ${formatDate(trip.end_date)}` : "dates TBC";
 
   try {
-    const genAI = getGemini();
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    let typePrompt = "";
+    if (message_type === "ready") {
+      typePrompt = `Write a friendly check-in WhatsApp message (2-3 sentences max) asking if they are ready to confirm their slot on the trip. Ask if they have any remaining questions about the itinerary, pricing, or details. Keep it low-pressure, warm, and clear.`;
+    } else if (message_type === "confirmation") {
+      typePrompt = `Write a booking confirmation WhatsApp message (3-4 sentences max) confirming that their slot is officially booked for the trip. Let them know we are excited to travel with them and will share pre-trip details soon.`;
+    } else if (message_type === "followup") {
+      typePrompt = `Write a warm follow-up WhatsApp message (2-3 sentences max) to check if they had a chance to look over the details we shared. Ask if they need any help or have any questions.`;
+    } else {
+      typePrompt = `Write a warm, short WhatsApp opening message (3-4 sentences max). Reference something specific from what they shared.`;
+    }
+
     const prompt = `You are writing a WhatsApp message for a Nomichi team member to send to a travel enquiry lead.
 
 Nomichi is a community-led travel brand that designs slow, offbeat, small-group journeys. The voice is warm, honest, specific, and still. Use second person. Write short sentences. No exclamation marks, no em-dashes, no AI-isms like "unlock", "elevate" or "embark on a journey". Prefer concrete detail over abstract feelings. The tagline is "Travel that finds you."
@@ -338,12 +376,17 @@ Lead details:
 - Trip dates: ${tripDates}
 - Group type: ${lead.group_type}
 - What they hope the trip feels like: ${lead.vibe_text}
+- Lead current status: ${lead.status}
 
-Write a warm, short WhatsApp opening message (3-4 sentences max). Reference something specific from what they shared. Sign off from "the Nomichi team". Do not use exclamation marks or em-dashes.`;
+${typePrompt}
 
-    const result = await model.generateContent(prompt);
-    res.json({ draft: result.response.text() });
-  } catch {
+${custom_context ? `Additional specific context or instruction for this message: "${custom_context}"` : ""}
+
+Sign off from "the Nomichi team". Do not use exclamation marks or em-dashes.`;
+
+    const draft = await groqChat(prompt);
+    res.json({ draft });
+  } catch (err) {
     res.status(500).json({ error: "AI generation failed. Please try again." });
   }
 });
@@ -363,8 +406,6 @@ router.post("/ai/summarize-log", async (req, res) => {
   if (!callLogs?.length) return res.json({ summary: "No call log entries yet." });
 
   try {
-    const genAI = getGemini();
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const logsText = callLogs
       .map((log: any, i: number) => `${i + 1}. [${new Date(log.created_at).toLocaleDateString()}] ${log.note}${log.next_action ? ` | Next: ${log.next_action}` : ""}`)
       .join("\n");
@@ -380,8 +421,8 @@ ${logsText}
 
 Write exactly one sentence (max 30 words) covering: where things stand + what to do next.`;
 
-    const result = await model.generateContent(prompt);
-    res.json({ summary: result.response.text() });
+    const summary = await groqChat(prompt);
+    res.json({ summary });
   } catch {
     res.status(500).json({ error: "AI generation failed. Please try again." });
   }
@@ -399,8 +440,6 @@ router.post("/ai/vibe-check", async (req, res) => {
   const trip = (lead as any).trips;
 
   try {
-    const genAI = getGemini();
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const prompt = `You are helping a Nomichi travel associate assess whether an enquiry lead is a good fit for slow, small-group travel.
 
 Nomichi runs intimate, offbeat journeys for people who want travel to feel personal and unhurried.
@@ -417,19 +456,72 @@ Trip they enquired about:
 
 Based only on the lead's own words, assess their fit. This is a suggestion to help the associate, never an automatic decision.
 
-Respond with valid JSON only:
+Respond with valid JSON only (no markdown, no code fences):
 {
   "fit": "strong" | "possible" | "unlikely",
   "reason": "One specific sentence explaining why, referencing something they actually said."
 }`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
+    const text = (await groqChat(prompt)).trim();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("Invalid AI response");
     res.json(JSON.parse(jsonMatch[0]));
   } catch {
     res.status(500).json({ error: "AI generation failed. Please try again." });
+  }
+});
+
+router.post("/ai/suggest-reply", async (req, res) => {
+  const user = await requireTeamMember(req, res);
+  if (!user) return;
+
+  const { lead_id } = req.body;
+  if (!lead_id) return res.status(400).json({ error: "lead_id required" });
+
+  const admin = getSupabaseAdmin();
+  const [{ data: lead }, { data: messages }] = await Promise.all([
+    admin.from("leads").select("*, trips(name, destination, start_date, end_date, description)").eq("id", lead_id).single(),
+    admin.from("messages").select("sender, content, created_at").eq("lead_id", lead_id).order("created_at", { ascending: true }),
+  ]);
+
+  if (!lead) return res.status(404).json({ error: "Lead not found" });
+
+  try {
+    const recentMessagesText = (messages ?? [])
+      .slice(-15)
+      .map((msg) => `${msg.sender === "admin" ? "Nomichi Team" : lead.name}: ${msg.content}`)
+      .join("\n");
+
+    const trip = (lead as any).trips;
+    const tripDetails = trip 
+      ? `Trip: ${trip.name} to ${trip.destination} (${trip.start_date} to ${trip.end_date}). Description: ${trip.description || "N/A"}`
+      : "No trip details chosen yet.";
+
+    const prompt = `You are a helpful co-pilot/assistant for the admin team at Nomichi, a premium travel company that organizes unhurried, small-group journeys.
+Your goal is to suggest a response to the latest message from the lead, ${lead.name}.
+
+Context:
+Lead Name: ${lead.name}
+Preferred Month: ${lead.preferred_month}
+Vibe preference: "${lead.vibe_text}"
+Current Lead Status: ${lead.status}
+${tripDetails}
+
+Recent Chat History:
+${recentMessagesText || "No chat history yet."}
+
+Instructions for the suggestion:
+- Draft a single, warm, highly helpful, and natural response from the Nomichi team ("we", "us").
+- Do NOT use exclamation marks.
+- Do NOT use em-dashes or complex punctuation. Keep it clean and elegant.
+- Keep the response concise (2-4 sentences max).
+- Refer to the context or last message naturally. If the last message was from the admin team, draft a polite follow-up or check-in.
+- Return ONLY the suggested response text, with no preamble, no quotes around the response, and no additional commentary. Just the plain message text.`;
+
+    const suggestion = await groqChat(prompt);
+    res.json({ suggestion: suggestion.trim() });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to generate suggested reply." });
   }
 });
 

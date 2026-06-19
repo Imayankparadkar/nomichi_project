@@ -9,12 +9,12 @@ import ChatBox from "@/components/ChatBox";
 import { apiGet, apiPost, apiPatch } from "@/lib/api";
 
 const vibeFitColors: Record<string, string> = {
-  strong:   "border-olive",
+  strong: "border-olive",
   possible: "border-sand/60",
   unlikely: "border-rust/50",
 };
 const vibeFitBg: Record<string, string> = {
-  strong:   "rgba(69,71,29,0.12)",
+  strong: "rgba(69,71,29,0.12)",
   possible: "rgba(209,183,136,0.08)",
   unlikely: "rgba(213,93,39,0.07)",
 };
@@ -43,9 +43,13 @@ export default function LeadDetailPage() {
   const [vibeFit, setVibeFit] = useState<{ fit: string; reason: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const [messageType, setMessageType] = useState<string>("intro");
+  const [customContext, setCustomContext] = useState<string>("");
+  const [geminiStatus, setGeminiStatus] = useState<{ working: boolean; error?: string } | null>(null);
+
   useEffect(() => {
     async function load() {
-      const [{ data: leadData }, { data: logsData }, { data: profilesData }] = await Promise.all([
+      const [{ data: leadData }, { data: logsData }, { data: profilesData }, checkRes] = await Promise.all([
         supabase
           .from("leads")
           .select("*, trips(id, name, destination, start_date, end_date, price_gst, description), owner:profiles!leads_owner_id_fkey(id, full_name, email)")
@@ -57,6 +61,7 @@ export default function LeadDetailPage() {
           .eq("lead_id", leadId)
           .order("created_at", { ascending: false }),
         supabase.from("profiles").select("id, full_name, email").order("full_name"),
+        apiGet("/api/ai/check-key").catch(() => null),
       ]);
 
       if (!leadData) { setLocation("/admin/leads"); return; }
@@ -65,6 +70,14 @@ export default function LeadDetailPage() {
       setOwnerId((leadData as any).owner_id ?? "");
       setCallLogs((logsData as CallLog[]) ?? []);
       setProfiles(profilesData ?? []);
+
+      if (checkRes && checkRes.ok) {
+        const keyData = await checkRes.json();
+        setGeminiStatus(keyData);
+      } else {
+        setGeminiStatus({ working: false, error: "Failed to connect to API server." });
+      }
+
       setLoading(false);
     }
     load();
@@ -98,7 +111,11 @@ export default function LeadDetailPage() {
 
   async function fetchWhatsappDraft() {
     setAiLoading("whatsapp");
-    const res = await apiPost("/api/ai/whatsapp-draft", { lead_id: leadId });
+    const res = await apiPost("/api/ai/whatsapp-draft", {
+      lead_id: leadId,
+      message_type: messageType,
+      custom_context: customContext.trim(),
+    });
     const data = await res.json();
     setWhatsappDraft(data.draft ?? "Could not generate draft.");
     setAiLoading(null);
@@ -139,7 +156,7 @@ export default function LeadDetailPage() {
   const divider = { borderTop: "1px solid rgba(255,251,245,0.07)" };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "2.5rem 2rem" }}>
       {/* Back + header */}
       <div className="mb-7">
         <Link href="/admin/leads" className="flex items-center gap-2 text-sm text-cream/40 font-poppins hover:text-cream transition-colors mb-4 w-fit underline-anim">
@@ -204,20 +221,70 @@ export default function LeadDetailPage() {
 
             {/* WhatsApp draft */}
             <div>
+              {/* Gemini API Status Banner */}
+              {geminiStatus && !geminiStatus.working && (
+                <div className="mb-4 p-3.5 border border-rust/40 rounded-lg" style={{ background: "rgba(213,93,39,0.07)" }}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-2 h-2 rounded-full bg-rust" />
+                    <p className="text-xs font-bold text-rust font-display uppercase tracking-wider">Gemini API Key Warning</p>
+                  </div>
+                  <p className="text-xs text-cream/70 font-poppins leading-relaxed">
+                    The configured API key is not working or has quota issues. Draft generation will fail.
+                  </p>
+                  <p className="text-[10px] text-rust font-mono mt-1 whitespace-pre-wrap leading-tight break-all border border-rust/15 p-2 rounded bg-black/30">
+                    Error: {geminiStatus.error || "Unknown quota/key error"}
+                  </p>
+                </div>
+              )}
+
+              {geminiStatus && geminiStatus.working && (
+                <div className="mb-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-olive/35 w-fit" style={{ background: "rgba(69,71,29,0.08)" }}>
+                  <div className="w-1.5 h-1.5 rounded-full bg-olive animate-pulse" />
+                  <span className="text-[10px] font-medium font-poppins text-olive uppercase tracking-wider font-semibold">Gemini API Active</span>
+                </div>
+              )}
+
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider font-poppins text-cream/40 block mb-1">Message Type</label>
+                  <select
+                    value={messageType}
+                    onChange={(e) => setMessageType(e.target.value)}
+                    className="select-base text-sm py-2"
+                  >
+                    <option value="intro">Intro / Welcome Draft</option>
+                    <option value="ready">Check-in ("Are you ready?")</option>
+                    <option value="confirmation">Booking Confirmation</option>
+                    <option value="followup">General Follow-up</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider font-poppins text-cream/40 block mb-1">Custom Context (Optional)</label>
+                  <input
+                    type="text"
+                    value={customContext}
+                    onChange={(e) => setCustomContext(e.target.value)}
+                    className="input-base text-sm py-2"
+                    placeholder="e.g. ask diet preference, mention veg options"
+                  />
+                </div>
+              </div>
+
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-cream font-poppins">WhatsApp draft</p>
+                <p className="text-sm font-medium text-cream font-poppins">WhatsApp Draft</p>
                 <button
                   onClick={fetchWhatsappDraft}
                   disabled={aiLoading === "whatsapp"}
-                  className="flex items-center gap-1.5 text-xs text-rust font-poppins hover:text-olive disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-rust font-poppins hover:text-olive disabled:opacity-50 transition-colors font-medium"
                 >
-                  <Sparkles className="w-3 h-3" />
-                  {aiLoading === "whatsapp" ? "Drafting…" : "Draft"}
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {aiLoading === "whatsapp" ? "Generating…" : "Generate Draft"}
                 </button>
               </div>
               {whatsappDraft && (
                 <div className="px-4 py-3 relative border-l-2 border-olive" style={{ background: "rgba(69,71,29,0.12)" }}>
-                  <p className="text-sm text-cream/80 font-poppins leading-relaxed pr-8">{whatsappDraft}</p>
+                  <p className="text-sm text-cream/80 font-poppins leading-relaxed pr-8 whitespace-pre-wrap">{whatsappDraft}</p>
                   <button
                     onClick={() => copyToClipboard(whatsappDraft)}
                     className="absolute top-3 right-3 text-cream/30 hover:text-cream/60 transition-colors"
@@ -349,11 +416,10 @@ export default function LeadDetailPage() {
                 <button
                   key={s}
                   onClick={() => updateStatus(s)}
-                  className={`w-full text-left px-3 py-2.5 text-sm font-poppins transition-colors ${
-                    status === s
+                  className={`w-full text-left px-3 py-2.5 text-sm font-poppins transition-colors ${status === s
                       ? "bg-rust text-cream font-medium"
                       : "text-cream/50 hover:text-cream hover:bg-cream/6"
-                  }`}
+                    }`}
                 >
                   {STATUS_LABELS[s]}
                 </button>

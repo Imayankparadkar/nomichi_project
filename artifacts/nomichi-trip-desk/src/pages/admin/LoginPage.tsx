@@ -26,7 +26,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
+      className="w-full min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
       style={{ backgroundColor: VOID }}
     >
       <div className="grain-overlay" aria-hidden="true" />
@@ -62,7 +62,7 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm relative z-10 animate-fade-up">
         <div className="mb-10 text-center">
-          <span className="text-rust font-display font-black text-3xl tracking-tight">Nomichi</span>
+          <img src="https://www.thenomichi.com/Logo-Rust-cropped.svg" alt="Nomichi" className="h-8 object-contain" />
           <div className="flex items-center justify-center gap-2 mt-3">
             <div className="h-px w-8" style={{ background: "rgba(255,251,245,0.15)" }} />
             <p className="text-cream/35 font-poppins text-xs tracking-widest uppercase">Team access</p>

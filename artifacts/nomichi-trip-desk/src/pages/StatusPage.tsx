@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { formatDate } from "@/lib/utils";
 import { CheckCircle, Clock, MessageCircle, Compass, XCircle, ArrowRight } from "lucide-react";
+import ChatBox from "@/components/ChatBox";
 
 const STATUS_INFO: Record<string, {
   label: string;
@@ -49,6 +50,7 @@ const STATUS_INFO: Record<string, {
 
 interface Enquiry {
   id: string;
+  name: string;
   status: string;
   preferred_month: string;
   created_at: string;
@@ -57,6 +59,7 @@ interface Enquiry {
 
 export default function StatusPage() {
   const [phone, setPhone] = useState("");
+  const [verifiedPhone, setVerifiedPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [enquiries, setEnquiries] = useState<Enquiry[] | null>(null);
@@ -80,11 +83,14 @@ export default function StatusPage() {
 
     if (!res.ok) { setError(data.error ?? "Something went wrong. Try again."); return; }
     if (!data.found) setNotFound(true);
-    else setEnquiries(data.enquiries);
+    else {
+      setEnquiries(data.enquiries);
+      setVerifiedPhone(cleaned);
+    }
   }
 
   return (
-    <div className="min-h-screen bg-void">
+    <div className="w-full min-h-screen flex flex-col" style={{ background: "#0D0C0B", color: "#FFFBF5" }}>
       <div className="grain-overlay" aria-hidden="true" />
 
       {/* Ambient glow */}
@@ -99,16 +105,16 @@ export default function StatusPage() {
       />
 
       {/* Nav */}
-      <header className="glass-nav sticky top-0 z-50 border-b border-cream/5">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="font-display font-black text-xl text-cream tracking-tight hover:text-rust transition-colors">
-            Nomichi
+      <header className="glass-nav sticky top-0 z-50 border-b border-cream/5 w-full">
+        <div className="page-container py-4 flex items-center justify-between">
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <img src="https://www.thenomichi.com/Logo-Rust-cropped.svg" alt="Nomichi" className="h-6 md:h-7 object-contain" />
           </Link>
           <div className="w-2 h-2 rounded-full bg-rust pulse-dot" />
         </div>
       </header>
 
-      <main className="max-w-xl mx-auto px-6 py-20 relative z-10">
+      <main style={{ maxWidth: "36rem", margin: "0 auto", padding: "6rem 2rem", position: "relative", zIndex: 10, flex: 1 }}>
         {/* Heading */}
         <div className="mb-12">
           <p className="text-xs uppercase tracking-[0.25em] text-rust font-poppins font-medium mb-5 animate-fade-in">
@@ -235,12 +241,28 @@ export default function StatusPage() {
                     </div>
                   )}
 
-                  <p className="text-xs text-cream/20 font-poppins mt-4">
+                  <p className="text-xs text-cream/20 font-poppins mt-4 mb-6">
                     Preferred: {enquiry.preferred_month} · Enquired{" "}
                     {new Date(enquiry.created_at).toLocaleDateString("en-IN", {
                       day: "numeric", month: "short", year: "numeric",
                     })}
                   </p>
+
+                  {/* Chat with Nomichi team */}
+                  <div className="mt-6 pt-6 border-t border-cream/10">
+                    <p className="text-xs uppercase tracking-[0.15em] font-poppins text-cream/40 font-semibold mb-3">
+                      Chat with the Nomichi team
+                    </p>
+                    <div className="p-4 bg-black/30 border border-cream/5 rounded-lg">
+                      <ChatBox
+                        leadId={enquiry.id}
+                        leadName={enquiry.name}
+                        isAdmin={false}
+                        phone={verifiedPhone}
+                        height="h-72"
+                      />
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -254,9 +276,9 @@ export default function StatusPage() {
         </div>
       </main>
 
-      <footer className="border-t border-cream/5 py-8 bg-void">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <span className="font-display font-bold text-xl text-cream">Nomichi</span>
+      <footer className="w-full border-t border-cream/5 py-10" style={{ background: "#0D0C0B" }}>
+        <div className="page-container flex flex-col sm:flex-row justify-between items-center gap-4">
+          <img src="https://www.thenomichi.com/Logo-Rust-cropped.svg" alt="Nomichi" className="h-6 md:h-7 object-contain" />
           <span className="text-xs text-cream/20 font-poppins tracking-widest uppercase">
             Wander. Connect. Belong.
           </span>
