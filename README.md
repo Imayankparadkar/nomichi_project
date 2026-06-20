@@ -1,63 +1,72 @@
 # Nomichi Trip Desk
 
-Internal CRM for the Nomichi travel team. Manages trip enquiries, lead pipeline, AI-assisted outreach, and real-time chat with leads.
+Internal CRM for the Nomichi travel team. Built as a single **Next.js 14 App Router** application, it manages trip enquiries, lead pipelines, AI-assisted outreach, and real-time chat with leads.
 
-## What's in here
+## Project Structure
 
 ```
-artifacts/
-  nomichi-trip-desk/   ← the web app (React + Vite)
-  api-server/          ← the backend API (Express + TypeScript)
+nomichi-next/              ← Next.js unified app
+├── app/
+│   ├── layout.tsx         # root layout, fonts, globals
+│   ├── page.tsx           # public trips page (/)
+│   ├── status/
+│   │   └── page.tsx       # lead status lookup (/status)
+│   ├── admin/
+│   │   ├── layout.tsx     # admin layout + auth guard
+│   │   ├── login/         # /admin/login
+│   │   ├── dashboard/     # /admin/dashboard
+│   │   ├── leads/         # /admin/leads and /admin/leads/[id]
+│   │   └── trips/         # /admin/trips
+│   └── api/               # Next.js Serverless Route Handlers (replacing Express)
+├── components/            # Reusable UI components
+├── lib/                   # Database clients, auth helpers, Groq SDK integration
+└── supabase/              # SQL seed & schema setups
 ```
-
-The web app talks to the API server for protected operations (lead updates, AI tools), and directly to Supabase for public reads (trips, enquiry status).
 
 ---
 
-## Running locally
+## Running Locally
 
-### 1. Clone and install
+### 1. Install dependencies
 
 ```bash
 git clone <repo-url>
-cd <repo>
-pnpm install
+cd nomichi-project/nomichi-next
+npm install
 ```
 
-### 2. Add your secrets
+### 2. Configure Environment Variables
+
+Create a `.env.local` file inside the `nomichi-next/` directory:
 
 ```bash
-cp .env.example .env
+cp ../.env.example .env.local
 ```
 
-Open `.env` and fill in:
+Open `.env.local` and populate the keys:
 
 | Variable | Where to find it |
 |---|---|
-| `VITE_SUPABASE_URL` | Supabase → Settings → API → Project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase → Settings → API → anon / public key |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Settings → API → Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API → anon / public key |
 | `SUPABASE_URL` | Same as above |
 | `SUPABASE_ANON_KEY` | Same as above |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → service_role key |
-| `GEMINI_API_KEY` | https://aistudio.google.com/app/apikey |
+| `GROQ_API_KEY` | https://console.groq.com/keys |
 
-### 3. Start
+### 3. Database & Seeding Setup
 
-Open two terminals:
+To set up your database schema and seed mock data:
+1. Go to your **Supabase Dashboard** -> **SQL Editor**.
+2. Run the schema creation query (if setting up database from scratch) or run the SQL in `nomichi-next/supabase/seed.sql` to populate 4 example trips, 6 leads, and chat conversations.
 
-```bash
-# Terminal 1 — backend API
-cd artifacts/api-server
-pnpm dev
-```
+### 4. Start Development Server
 
 ```bash
-# Terminal 2 — frontend
-cd artifacts/nomichi-trip-desk
-pnpm dev
+npm run dev
 ```
 
-The app runs at `http://localhost:5173` by default.
+The app will run at `http://localhost:3000`.
 
 ---
 
@@ -66,36 +75,30 @@ The app runs at `http://localhost:5173` by default.
 | URL | Who sees it | What it does |
 |---|---|---|
 | `/` | Public | Lists open trips, handles enquiries |
-| `/status` | Public | Lets a lead check their enquiry status by phone number |
+| `/status` | Public | Lets a lead check their enquiry status and live chat with team |
 | `/admin/login` | Team only | Sign in with Supabase email/password |
-| `/admin/dashboard` | Team only | Pipeline overview, stats |
-| `/admin/leads` | Team only | Full lead list with filters |
-| `/admin/leads/:id` | Team only | Lead detail, AI tools, call log, chat |
-| `/admin/trips` | Team only | Create and manage trips |
+| `/admin/dashboard` | Team only | Pipeline overview, metrics, and PDF exporting |
+| `/admin/leads` | Team only | Full lead list with status/trip filters |
+| `/admin/leads/:id` | Team only | Lead detail, AI tools, call log, and live chat |
+| `/admin/trips` | Team only | Create, edit, and close trips |
 
 ---
 
-## AI tools (on lead detail page)
+## AI Reply Co-pilot (Lead Detail & Chat Page)
 
-All powered by Gemini 2.0 Flash:
+Powered by **Groq LLaMA-3**:
 
-- **WhatsApp draft** — generates a personalised opening message based on what the lead wrote
-- **Call log summary** — one-sentence handover note from the full call history
-- **Vibe fit** — suggests how well the lead's vibe matches the trip (strong / possible / unlikely)
-
----
-
-## Tech
-
-- **Frontend**: React, Vite, Tailwind CSS v4, Wouter (routing), Supabase client
-- **Backend**: Node.js, Express, TypeScript, Supabase admin client, Gemini AI
-- **Database/Auth**: Supabase (PostgreSQL + auth)
-- **Package manager**: pnpm (workspaces)
+- **WhatsApp Draft** — generates a warm, personalized initial message matching Nomichi's specific brand voice.
+- **AI Suggest Reply** (Inside ChatBox) — suggests a direct context-aware reply to any message sent by the lead.
+- **Call Log Handover Summary** — summarizes call notes into a single-sentence handover memo.
+- **Vibe Fit Check** — assesses if the lead's travel expectations align with Nomichi's slow, small-group model.
 
 ---
 
-## Team notes
+## Tech Stack
 
-- Secrets on Replit live in the **Secrets** tab (not `.env`). On Replit you never need `.env` — just add secrets there.
-- The `.env.example` file is for running a local copy on your own machine.
-- Don't commit `.env` to git — it's in `.gitignore`.
+- **Framework**: Next.js 14 (App Router) + TypeScript
+- **Styling**: Vanilla CSS (migrated from original design system in `globals.css`)
+- **Database/Auth**: Supabase (PostgreSQL, Row-Level Security, Auth)
+- **AI Engine**: Groq SDK (LLaMA-3 models)
+- **PDF Reports**: jsPDF + jsPDF-AutoTable
