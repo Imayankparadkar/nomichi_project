@@ -146,10 +146,10 @@ export default function StatusPage() {
 
         {/* Hidden Trigger & Widget Script for Omni Dimension */}
         <button id="omni-open-widget-btn" className="hidden" aria-hidden="true">Hidden Trigger</button>
-        {process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY && (
+        {process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY && verifiedPhone && (
           <Script
             id="omnidimension-web-widget"
-            src={`https://omnidim.io/web_widget.js?secret_key=${process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY}`}
+            src={`https://omnidim.io/web_widget.js?secret_key=${process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY}&user_email=${verifiedPhone}@nomichi.local`}
             strategy="afterInteractive"
           />
         )}

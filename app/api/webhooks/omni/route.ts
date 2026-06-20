@@ -21,14 +21,29 @@ export async function POST(req: NextRequest) {
 
     // 1. Try to find by email if it's a Web Call and email is provided
     if (!targetLeadId && user_email) {
-      const { data: leads } = await admin
-        .from("leads")
-        .select("id")
-        .ilike("email", user_email)
-        .limit(1);
-        
-      if (leads && leads.length > 0) {
-        targetLeadId = leads[0].id;
+      if (user_email.endsWith("@nomichi.local")) {
+        // This is a custom string we passed via the Web Widget containing the verified phone number!
+        const phoneDigits = user_email.replace("@nomichi.local", "").slice(-10);
+        const { data: leads } = await admin
+          .from("leads")
+          .select("id")
+          .ilike("phone", `%${phoneDigits}%`)
+          .limit(1);
+          
+        if (leads && leads.length > 0) {
+          targetLeadId = leads[0].id;
+        }
+      } else {
+        // Regular email search
+        const { data: leads } = await admin
+          .from("leads")
+          .select("id")
+          .ilike("email", user_email)
+          .limit(1);
+          
+        if (leads && leads.length > 0) {
+          targetLeadId = leads[0].id;
+        }
       }
     }
 
