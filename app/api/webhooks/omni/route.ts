@@ -4,34 +4,61 @@ import { getSupabaseAdmin } from "@/lib/supabase-server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { phone_number, lead_id, note, transcript, next_action } = body;
+    console.log("Omni Webhook Payload:", body);
+
+    const { phone_number, to_number, from_number, call_report, user_email, lead_id } = body;
     
-    // The AI agent might send 'transcript' instead of 'note' depending on how it's configured.
-    const finalNote = note || transcript || "Automated call completed. No transcript provided.";
+    // Omni Dimension sends the transcript and summary inside `call_report`
+    let finalNote = "Automated call completed.";
+    if (call_report) {
+      finalNote = `**Summary:**\n${call_report.summary || 'N/A'}\n\n**Conversation:**\n${call_report.full_conversation || 'N/A'}`;
+    }
+
+    const next_action = call_report?.extracted_variables?.suggested_next_actions || "Review AI call transcript";
     
     const admin = getSupabaseAdmin();
     let targetLeadId = lead_id;
 
-    // If the webhook only provides a phone number, look up the lead in Supabase
-    if (!targetLeadId && phone_number) {
-      // Extract the last 10 digits to avoid country code mismatch issues
-      const phoneDigits = phone_number.replace(/\D/g, '').slice(-10);
-      
-      const { data: leads, error: leadError } = await admin
+    // 1. Try to find by email if it's a Web Call and email is provided
+    if (!targetLeadId && user_email) {
+      const { data: leads } = await admin
         .from("leads")
         .select("id")
-        .ilike("phone", `%${phoneDigits}%`)
+        .ilike("email", user_email)
         .limit(1);
         
-      if (!leadError && leads && leads.length > 0) {
+      if (leads && leads.length > 0) {
         targetLeadId = leads[0].id;
-      } else {
-        return NextResponse.json({ error: "Lead not found for this phone number." }, { status: 404 });
+      }
+    }
+
+    // 2. Try to find by phone number if it's not a "Web Call"
+    if (!targetLeadId) {
+      const potentialPhones = [phone_number, to_number, from_number].filter(
+        p => p && p !== "Web Call" && p !== "Assistant"
+      );
+
+      for (const phone of potentialPhones) {
+        const phoneDigits = phone.replace(/\D/g, '').slice(-10);
+        if (phoneDigits.length >= 10) {
+          const { data: leads } = await admin
+            .from("leads")
+            .select("id")
+            .ilike("phone", `%${phoneDigits}%`)
+            .limit(1);
+            
+          if (leads && leads.length > 0) {
+            targetLeadId = leads[0].id;
+            break;
+          }
+        }
       }
     }
 
     if (!targetLeadId) {
-       return NextResponse.json({ error: "lead_id or phone_number is required in the payload." }, { status: 400 });
+       console.error("Lead not found for webhook payload", { user_email, phone_number });
+       // We return 200 instead of 404/400 so Omni Dimension stops retrying and closing the circuit!
+       return NextResponse.json({ error: "Lead not found in CRM. Ignored." }, { status: 200 });
     }
 
     // Insert the call log into Supabase
@@ -40,8 +67,7 @@ export async function POST(req: NextRequest) {
       .insert({
          lead_id: targetLeadId,
          note: finalNote,
-         next_action: next_action || "Review AI call transcript",
-         // We do not pass created_by, so it will be null (indicating a system/AI action)
+         next_action: next_action
       })
       .select()
       .single();
@@ -57,3 +83,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
