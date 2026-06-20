@@ -62,7 +62,7 @@ Sign off from "the Nomichi team". Do not use exclamation marks or em-dashes.`;
 
     const draft = await groqChat(prompt);
     return NextResponse.json({ draft });
-  } catch {
-    return NextResponse.json({ error: "AI generation failed. Please try again." }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "AI generation failed. Please try again." }, { status: 500 });
   }
 }

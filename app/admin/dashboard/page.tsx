@@ -99,11 +99,11 @@ export default function DashboardPage() {
   const byStatus: Record<string, number> = {};
   leads.forEach((l) => { byStatus[l.status] = (byStatus[l.status] ?? 0) + 1; });
 
-  const byTrip: Record<string, { name: string; count: number }> = {};
+  const byTrip: Record<string, { id: string; name: string; count: number }> = {};
   leads.forEach((l: any) => {
     if (!l.trip_id) return;
     const tripName = l.trips?.name ?? "Unknown";
-    if (!byTrip[l.trip_id]) byTrip[l.trip_id] = { name: tripName, count: 0 };
+    if (!byTrip[l.trip_id]) byTrip[l.trip_id] = { id: l.trip_id, name: tripName, count: 0 };
     byTrip[l.trip_id].count += 1;
   });
 
@@ -203,8 +203,9 @@ export default function DashboardPage() {
                 .sort((a, b) => b.count - a.count)
                 .map((item, i) => (
                   <div
-                    key={item.name}
+                    key={item.id}
                     className="flex justify-between items-center py-1.5 animate-fade-up"
+
                     style={{
                       borderBottom: "1px solid rgba(255,251,245,0.07)",
                       animationDelay: `${350 + i * 50}ms`,

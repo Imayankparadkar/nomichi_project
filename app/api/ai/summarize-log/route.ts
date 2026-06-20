@@ -42,7 +42,7 @@ Write exactly one sentence (max 30 words) covering: where things stand + what to
 
     const summary = await groqChat(prompt);
     return NextResponse.json({ summary });
-  } catch {
-    return NextResponse.json({ error: "AI generation failed. Please try again." }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "AI generation failed. Please try again." }, { status: 500 });
   }
 }

@@ -57,7 +57,7 @@ Instructions:
 
     const suggestion = await groqChat(prompt);
     return NextResponse.json({ suggestion: suggestion.trim() });
-  } catch {
-    return NextResponse.json({ error: "Failed to generate suggested reply." }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to generate suggested reply." }, { status: 500 });
   }
 }

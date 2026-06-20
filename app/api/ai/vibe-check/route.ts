@@ -49,7 +49,7 @@ Respond with valid JSON only (no markdown, no code fences):
     if (!jsonMatch) throw new Error("Invalid AI response");
     
     return NextResponse.json(JSON.parse(jsonMatch[0]));
-  } catch {
-    return NextResponse.json({ error: "AI generation failed. Please try again." }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "AI generation failed. Please try again." }, { status: 500 });
   }
 }
