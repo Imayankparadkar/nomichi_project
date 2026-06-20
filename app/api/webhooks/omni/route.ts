@@ -49,12 +49,13 @@ export async function POST(req: NextRequest) {
 
     // 2. Try to find by phone number if it's not a "Web Call"
     if (!targetLeadId) {
-      const potentialPhones = [phone_number, to_number, from_number].filter(
+      const extractedPhone = call_report?.extracted_variables?.customer_phone;
+      const potentialPhones = [extractedPhone, phone_number, to_number, from_number].filter(
         p => p && p !== "Web Call" && p !== "Assistant"
       );
 
       for (const phone of potentialPhones) {
-        const phoneDigits = phone.replace(/\D/g, '').slice(-10);
+        const phoneDigits = String(phone).replace(/\D/g, '').slice(-10);
         if (phoneDigits.length >= 10) {
           const { data: leads } = await admin
             .from("leads")
