@@ -77,13 +77,18 @@ export async function POST(req: NextRequest) {
        return NextResponse.json({ error: "Lead not found in CRM. Ignored." }, { status: 200 });
     }
 
+    // Fetch a default user profile to act as the "Creator" of this log
+    // since the database likely requires 'created_by' to not be null.
+    const { data: defaultUser } = await admin.from("profiles").select("id").limit(1).single();
+
     // Insert the call log into Supabase
     const { data, error } = await admin
       .from("call_logs")
       .insert({
          lead_id: targetLeadId,
          note: finalNote,
-         next_action: next_action
+         next_action: next_action,
+         created_by: defaultUser?.id || null
       })
       .select()
       .single();
