@@ -144,6 +144,16 @@ export default function StatusPage() {
           </p>
         </div>
 
+        {/* Hidden Trigger & Widget Script for Omni Dimension */}
+        <button id="omni-open-widget-btn" className="hidden" aria-hidden="true">Hidden Trigger</button>
+        {process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY && (
+          <Script
+            id="omnidimension-web-widget"
+            src={`https://omnidim.io/web_widget.js?secret_key=${process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY}`}
+            strategy="afterInteractive"
+          />
+        )}
+
         {/* Form */}
         <form onSubmit={checkStatus} className="space-y-4 mb-10 animate-fade-up" style={{ animationDelay: "140ms" }}>
           <div>
@@ -286,19 +296,16 @@ export default function StatusPage() {
                       Speak with our Voice Call Agent
                     </p>
                     <button
-                      id="omni-open-widget-btn"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const hiddenBtn = document.getElementById("omni-open-widget-btn");
+                        if (hiddenBtn) hiddenBtn.click();
+                      }}
                       className="btn-primary btn-shimmer w-full py-3.5 text-center flex items-center justify-center gap-2 font-poppins text-sm"
                     >
                       <MessageCircle className="w-4 h-4" />
                       Start Voice Call
                     </button>
-                    {process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY && (
-                      <Script
-                        id="omnidimension-web-widget"
-                        src={`https://omnidim.io/web_widget.js?secret_key=${process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY}`}
-                        strategy="lazyOnload"
-                      />
-                    )}
                   </div>
                 </div>
               );
