@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { CheckCircle, Clock, MessageCircle, Compass, XCircle, ArrowRight } from "lucide-react";
 import ChatBox from "@/components/ChatBox";
+import Script from "next/script";
 
 const STATUS_INFO: Record<string, {
   label: string;
@@ -277,6 +278,27 @@ export default function StatusPage() {
                         height="h-72"
                       />
                     </div>
+                  </div>
+
+                  {/* Speak with Call Agent */}
+                  <div className="mt-6 pt-6 border-t border-cream/10">
+                    <p className="text-xs uppercase tracking-[0.15em] font-poppins text-cream/40 font-semibold mb-3">
+                      Speak with our Voice Call Agent
+                    </p>
+                    <button
+                      id="omni-open-widget-btn"
+                      className="btn-primary btn-shimmer w-full py-3.5 text-center flex items-center justify-center gap-2 font-poppins text-sm"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Start Voice Call
+                    </button>
+                    {process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY && (
+                      <Script
+                        id="omnidimension-web-widget"
+                        src={`https://omnidim.io/web_widget.js?secret_key=${process.env.NEXT_PUBLIC_OMNIDIMENSION_SECRET_KEY}`}
+                        strategy="lazyOnload"
+                      />
+                    )}
                   </div>
                 </div>
               );
