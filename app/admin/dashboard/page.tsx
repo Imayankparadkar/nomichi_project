@@ -1,5 +1,7 @@
 "use client";
 
+
+
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase-client";
 import type { LeadStatus } from "@/lib/types";
@@ -125,13 +127,48 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="w-full flex items-center justify-center min-h-screen p-8">
-        <div className="flex flex-col items-center gap-3">
-          <span
-            className="w-6 h-6 border-2 rounded-full inline-block"
-            style={{ borderColor: "rgba(255,251,245,0.15)", borderTopColor: "#D55D27", animation: "spin 0.7s linear infinite" }}
-          />
-          <p className="text-cream/30 font-poppins text-sm">Loading…</p>
+      <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "2.5rem 2rem" }} className="animate-pulse">
+        <div className="mb-9 flex items-start justify-between gap-4">
+          <div>
+            <div className="h-8 w-64 bg-cream/10 rounded mb-2"></div>
+            <div className="h-4 w-40 bg-cream/5 rounded"></div>
+          </div>
+          <div className="h-10 w-32 bg-cream/10 rounded"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="card p-6">
+              <div className="h-3 w-24 bg-cream/10 rounded mb-4"></div>
+              <div className="h-12 w-16 bg-cream/10 rounded"></div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="card p-6">
+             <div className="h-5 w-32 bg-cream/10 rounded mb-6"></div>
+             <div className="space-y-5">
+               {[1, 2, 3, 4, 5].map(i => (
+                 <div key={i}>
+                   <div className="flex justify-between mb-2">
+                     <div className="h-3 w-24 bg-cream/5 rounded"></div>
+                     <div className="h-3 w-8 bg-cream/5 rounded"></div>
+                   </div>
+                   <div className="h-1 w-full bg-cream/5 rounded"></div>
+                 </div>
+               ))}
+             </div>
+          </div>
+          <div className="card p-6">
+             <div className="h-5 w-32 bg-cream/10 rounded mb-6"></div>
+             <div className="space-y-4">
+               {[1, 2, 3, 4].map(i => (
+                 <div key={i} className="flex justify-between py-2 border-b border-cream/5">
+                   <div className="h-4 w-32 bg-cream/5 rounded"></div>
+                   <div className="h-4 w-6 bg-cream/5 rounded"></div>
+                 </div>
+               ))}
+             </div>
+          </div>
         </div>
       </div>
     );

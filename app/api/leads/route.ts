@@ -49,11 +49,18 @@ export async function GET(req: NextRequest) {
   const trip = searchParams.get("trip");
   const q = searchParams.get("q");
   const owner = searchParams.get("owner");
+  
+  // Pagination / Lazy loading
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "50");
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
 
   let query = admin
     .from("leads")
-    .select("*, trips(id, name, destination), owner:profiles!leads_owner_id_fkey(id, full_name, email)")
-    .order("created_at", { ascending: false });
+    .select("id, name, email, phone, status, created_at, group_type, vibe_text, trips(id, name, destination), owner:profiles!leads_owner_id_fkey(id, full_name, email)")
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (status) query = query.eq("status", status) as typeof query;
   if (trip) query = query.eq("trip_id", trip) as typeof query;

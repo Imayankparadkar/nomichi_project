@@ -222,11 +222,29 @@ export default function PublicPage() {
           )}
 
           {loading ? (
-            <div className="text-center py-24 border" style={{ background: "rgba(255,251,245,0.02)", borderColor: "rgba(255,251,245,0.07)" }}>
-              <div className="flex justify-center mb-4">
-                <div className="w-6 h-6 border-2 rounded-full" style={{ borderColor: "rgba(213,93,39,0.3)", borderTopColor: "#D55D27", animation: "spin 0.7s linear infinite" }} />
-              </div>
-              <p className="font-poppins text-sm" style={{ color: "rgba(255,251,245,0.35)" }}>Loading trips…</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-pulse">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="glass-card p-6 md:p-8" style={{ border: "1px solid rgba(255,251,245,0.08)", background: "rgba(255,251,245,0.02)" }}>
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <div className="h-7 w-48 md:w-56 bg-cream/10 rounded mb-2.5"></div>
+                      <div className="h-4 w-32 bg-cream/5 rounded"></div>
+                    </div>
+                    <div className="h-8 w-24 bg-cream/10 rounded"></div>
+                  </div>
+                  <div className="flex gap-4 mb-8">
+                    <div className="h-4 w-24 bg-cream/5 rounded"></div>
+                    <div className="h-4 w-20 bg-cream/5 rounded"></div>
+                  </div>
+                  <div className="h-4 w-full bg-cream/5 rounded mb-2.5"></div>
+                  <div className="h-4 w-full bg-cream/5 rounded mb-2.5"></div>
+                  <div className="h-4 w-2/3 bg-cream/5 rounded mb-8"></div>
+                  <div className="flex justify-between items-center pt-6 border-t" style={{ borderColor: "rgba(255,251,245,0.05)" }}>
+                    <div className="h-10 w-32 bg-cream/10 rounded"></div>
+                    <div className="h-4 w-16 bg-cream/5 rounded"></div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : formOpen && selectedTrip ? (
             <div className="max-w-2xl mx-auto animate-fade-up">

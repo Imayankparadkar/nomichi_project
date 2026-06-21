@@ -14,11 +14,13 @@ const tripSchema = z.object({
   description: z.string().min(10),
 });
 
+export const revalidate = 60; // Cache the trips API for 60 seconds
+
 export async function GET() {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
     .from("trips")
-    .select("*")
+    .select("id, name, destination, start_date, end_date, price_gst, total_seats, seats_available, status")
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

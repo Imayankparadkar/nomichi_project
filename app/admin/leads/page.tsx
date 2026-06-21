@@ -157,16 +157,36 @@ export default function LeadsPage() {
         )}
       </div>
 
-      {/* Table */}
       {loading ? (
-        <div
-          className="px-8 py-16 text-center border"
-          style={{ borderColor: "rgba(255,251,245,0.08)", background: "rgba(255,251,245,0.02)" }}
-        >
-          <div className="flex justify-center mb-3">
-            <span className="w-5 h-5 border-2 rounded-full" style={{ borderColor: "rgba(255,251,245,0.15)", borderTopColor: "#D55D27", animation: "spin 0.7s linear infinite" }} />
+        <div className="border animate-pulse" style={{ borderColor: "rgba(255,251,245,0.08)" }}>
+          <div className="grid grid-cols-12 px-5 py-2.5" style={{ background: "rgba(255,251,245,0.04)", borderBottom: "1px solid rgba(255,251,245,0.07)" }}>
+            <span className="col-span-3 text-xs font-medium text-cream/20 uppercase tracking-wider font-poppins">Name</span>
+            <span className="col-span-3 text-xs font-medium text-cream/20 uppercase tracking-wider font-poppins">Trip</span>
+            <span className="col-span-2 text-xs font-medium text-cream/20 uppercase tracking-wider font-poppins">Status</span>
+            <span className="col-span-2 text-xs font-medium text-cream/20 uppercase tracking-wider font-poppins">Owner</span>
+            <span className="col-span-2 text-xs font-medium text-cream/20 uppercase tracking-wider font-poppins">Date</span>
           </div>
-          <p className="text-cream/30 font-poppins text-sm">Loading…</p>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="grid grid-cols-12 px-5 py-3.5" style={{ borderTop: i > 1 ? "1px solid rgba(255,251,245,0.05)" : "none" }}>
+              <div className="col-span-3">
+                <div className="h-4 w-32 bg-cream/10 rounded mb-1.5"></div>
+                <div className="h-3 w-24 bg-cream/5 rounded"></div>
+              </div>
+              <div className="col-span-3">
+                <div className="h-4 w-28 bg-cream/10 rounded mb-1.5"></div>
+                <div className="h-3 w-36 bg-cream/5 rounded"></div>
+              </div>
+              <div className="col-span-2 flex items-center">
+                <div className="h-6 w-20 bg-cream/10 rounded-full"></div>
+              </div>
+              <div className="col-span-2 flex items-center">
+                <div className="h-4 w-24 bg-cream/10 rounded"></div>
+              </div>
+              <div className="col-span-2 flex items-center">
+                <div className="h-4 w-20 bg-cream/5 rounded"></div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : leads.length === 0 ? (
         <div

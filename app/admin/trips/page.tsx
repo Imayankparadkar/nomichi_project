@@ -205,8 +205,26 @@ export default function TripsPage() {
 
       {/* Trip list */}
       {loading ? (
-        <div className="px-8 py-16 text-center border" style={{ borderColor: "rgba(255,251,245,0.08)", background: "rgba(255,251,245,0.02)" }}>
-          <span className="w-5 h-5 border-2 rounded-full inline-block" style={{ borderColor: "rgba(255,251,245,0.15)", borderTopColor: "#D55D27", animation: "spin 0.7s linear infinite" }} />
+        <div className="space-y-4 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card flex items-start gap-4">
+              <div className="flex-1">
+                <div className="flex items-start justify-between gap-4 mb-1">
+                  <div>
+                    <div className="h-6 w-48 bg-cream/10 rounded mb-2"></div>
+                    <div className="h-4 w-32 bg-cream/5 rounded"></div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="h-6 w-24 bg-cream/10 rounded mb-2"></div>
+                    <div className="h-3 w-16 bg-cream/5 rounded ml-auto"></div>
+                  </div>
+                </div>
+                <div className="h-3 w-64 bg-cream/5 rounded my-3"></div>
+                <div className="h-4 w-full bg-cream/5 rounded mb-2"></div>
+                <div className="h-4 w-3/4 bg-cream/5 rounded"></div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : trips.length === 0 ? (
         <div className="px-8 py-16 text-center border" style={{ borderColor: "rgba(255,251,245,0.08)", background: "rgba(255,251,245,0.02)" }}>
