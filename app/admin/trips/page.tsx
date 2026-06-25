@@ -63,10 +63,12 @@ export default function TripsPage() {
     setEditingId(trip.id);
     setShowForm(true);
     setErrors({});
+    document.getElementById("admin-scroll-container")?.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function startNew() {
     setForm(emptyForm); setEditingId(null); setShowForm(true); setErrors({});
+    document.getElementById("admin-scroll-container")?.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancel() {

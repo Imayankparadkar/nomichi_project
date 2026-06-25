@@ -147,7 +147,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto w-full" style={{ backgroundColor: VOID }}>
+      <main id="admin-scroll-container" className="flex-1 overflow-y-auto w-full" style={{ backgroundColor: VOID }}>
         <div className="w-full">
           {children}
         </div>
