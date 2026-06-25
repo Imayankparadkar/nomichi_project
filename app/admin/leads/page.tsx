@@ -105,7 +105,7 @@ export default function LeadsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="input-base pl-9 pr-4 w-60"
-              placeholder="Name, email or phone"
+              placeholder="      Name, email or phone"
             />
           </div>
           <button type="submit" className="btn-primary ml-2 text-sm py-2.5 px-4">
