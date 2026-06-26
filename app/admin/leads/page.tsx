@@ -59,6 +59,17 @@ export default function LeadsPage() {
       setLoading(false);
     }
     load();
+
+    const channel = supabase
+      .channel("admin-leads-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, () => {
+        load();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [statusFilter, tripFilter, ownerFilter, search]);
 
   function updateFilter(key: string, value: string) {
