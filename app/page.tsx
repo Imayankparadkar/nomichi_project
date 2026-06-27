@@ -271,7 +271,7 @@ export default function PublicPage() {
         <div className="page-container flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
             <img src="https://www.thenomichi.com/Logo-Rust-cropped.svg" alt="Nomichi" className="h-6 md:h-7 object-contain" />
-            <p className="text-xs font-poppins mt-0.5" style={{ color: "rgba(255,251,245,0.2)" }}>Travel that finds you.</p>
+            {/* <p className="text-xs font-poppins mt-0.5" style={{ color: "rgba(255,251,245,0.2)" }}>Travel that finds you.</p> */}
           </div>
           <div className="flex items-center gap-6">
             <Link href="/status" className="text-xs font-poppins underline-anim" style={{ color: "rgba(255,251,245,0.3)" }}>Track enquiry</Link>

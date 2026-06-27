@@ -88,9 +88,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Logo */}
         <div className="px-5 py-6" style={{ borderBottom: "1px solid rgba(255,251,245,0.06)" }}>
           <img src="https://www.thenomichi.com/Logo-Rust-cropped.svg" alt="Nomichi" className="h-6 md:h-7 object-contain" />
-          <p className="text-[10px] text-cream/25 font-poppins mt-0.5 uppercase tracking-widest">
+          {/* <p className="text-[10px] text-cream/25 font-poppins mt-0.5 uppercase tracking-widest">
             Trip Desk
-          </p>
+          </p> */}
         </div>
 
         {/* Nav */}
