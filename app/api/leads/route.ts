@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { QueueService } from "@/lib/queue";
 
 const createLeadSchema = z.object({
   name: z.string().min(2),
@@ -22,17 +23,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const admin = getSupabaseAdmin();
-  const { data, error } = await admin
-    .from("leads")
-    .insert({ ...parsed.data, status: "NEW" })
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: "Failed to save enquiry" }, { status: 500 });
+  try {
+    const result = await QueueService.enqueueLead({ ...parsed.data, status: "NEW" });
+    return NextResponse.json({ success: true, ...result }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to process enquiry" }, { status: 500 });
   }
-  return NextResponse.json({ success: true, lead: data }, { status: 201 });
 }
 
 export async function GET(req: NextRequest) {
