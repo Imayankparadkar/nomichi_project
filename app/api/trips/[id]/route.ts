@@ -12,6 +12,7 @@ const updateTripSchema = z.object({
   seats_available: z.number().int().min(0).optional(),
   status: z.enum(["open", "closed"]).optional(),
   description: z.string().min(10).optional(),
+  version_id: z.number().int().positive().optional(),
 });
 
 export async function PATCH(
@@ -30,9 +31,40 @@ export async function PATCH(
   }
 
   const admin = getSupabaseAdmin();
+  
+  // Extract version_id and the rest of the data
+  const { version_id, ...updateData } = parsed.data;
+
+  // If version_id is provided, perform OCC check
+  if (version_id !== undefined) {
+    // We increment the version ID on save
+    const newVersion = version_id + 1;
+    
+    const { data, error, count } = await admin
+      .from("trips")
+      .update({ ...updateData, version_id: newVersion })
+      .eq("id", id)
+      .eq("version_id", version_id) // ONLY update if the database version matches the frontend's version
+      .select()
+      .single();
+
+    // If we hit an error but the query didn't fail functionally, it means 0 rows were updated
+    // which implies the version_id didn't match.
+    if (error && error.code === 'PGRST116') { // PostgREST error for "0 rows returned" on single()
+      return NextResponse.json(
+        { error: "Conflict: Another admin has updated this trip. Please refresh to see their changes." }, 
+        { status: 409 }
+      );
+    }
+    
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data);
+  }
+
+  // Fallback (for older clients or bulk scripts that don't pass version_id)
   const { data, error } = await admin
     .from("trips")
-    .update(parsed.data)
+    .update(updateData)
     .eq("id", id)
     .select()
     .single();

@@ -71,15 +71,16 @@ export async function PATCH(
     const wasConfirmed = oldStatus === "CONFIRMED";
     const nowConfirmed = newStatus === "CONFIRMED";
     if (nowConfirmed || wasConfirmed) {
-      const { data: trip } = await admin
-        .from("trips")
-        .select("seats_available")
-        .eq("id", tripId)
-        .single();
-      if (trip) {
-        const delta = nowConfirmed ? -1 : +1;
-        const newSeats = Math.max(0, (trip as any).seats_available + delta);
-        await admin.from("trips").update({ seats_available: newSeats }).eq("id", tripId);
+      const delta = nowConfirmed ? -1 : +1;
+      
+      // Perform atomic seat update in the database to prevent race conditions
+      const { data: success, error: rpcError } = await admin.rpc('update_trip_seats', { 
+        p_trip_id: tripId, 
+        p_delta: delta 
+      });
+
+      if (rpcError) {
+        console.error("Atomic seat update failed:", rpcError);
       }
     }
   }

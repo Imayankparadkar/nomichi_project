@@ -11,6 +11,7 @@ const emptyForm = {
   name: "", destination: "", start_date: "", end_date: "",
   price_gst: "", total_seats: "", seats_available: "",
   status: "open" as "open" | "closed", description: "",
+  version_id: 1,
 };
 
 type TripForm = typeof emptyForm;
@@ -59,6 +60,7 @@ export default function TripsPage() {
       price_gst: String(trip.price_gst), total_seats: String(trip.total_seats),
       seats_available: String(trip.seats_available), status: trip.status,
       description: trip.description,
+      version_id: (trip as any).version_id ?? 1,
     });
     setEditingId(trip.id);
     setShowForm(true);
@@ -84,9 +86,15 @@ export default function TripsPage() {
       price_gst: Number(form.price_gst), total_seats: Number(form.total_seats),
       seats_available: Number(form.seats_available || form.total_seats),
       status: form.status, description: form.description.trim(),
+      version_id: form.version_id,
     };
     if (editingId) {
       const res = await apiPatch(`/api/trips/${editingId}`, body);
+      if (res.status === 409) {
+        setSaveError("Conflict: Another admin has updated this trip. Please refresh to see their changes before saving.");
+        setSaving(false);
+        return;
+      }
       if (!res.ok) { setSaveError("Could not save changes. Try again."); setSaving(false); return; }
       const updated = await res.json();
       setTrips(trips.map((t) => (t.id === editingId ? updated : t)));
