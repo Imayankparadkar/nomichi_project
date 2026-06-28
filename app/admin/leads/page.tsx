@@ -7,7 +7,8 @@ import { supabase } from "@/lib/supabase-client";
 import type { Lead } from "@/lib/types";
 import { LEAD_STATUSES, STATUS_LABELS } from "@/lib/types";
 import { formatDate, getStatusBadgeClass } from "@/lib/utils";
-import { Search, X } from "lucide-react";
+import { Search, X, DatabaseBackup } from "lucide-react";
+import { apiGet } from "@/lib/api-client";
 
 export default function LeadsPage() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function LeadsPage() {
   const [trips, setTrips] = useState<Array<{ id: string; name: string }>>([]);
   const [profiles, setProfiles] = useState<Array<{ id: string; full_name: string | null; email: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const [processingQueue, setProcessingQueue] = useState(false);
 
   useEffect(() => {
     supabase.from("trips").select("id, name").order("name").then(({ data }) => setTrips(data ?? []));
@@ -84,6 +86,24 @@ export default function LeadsPage() {
     updateFilter("q", search);
   }
 
+  async function processQueue() {
+    if (processingQueue) return;
+    setProcessingQueue(true);
+    try {
+      const res = await apiGet("/api/workers/process-leads");
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Queue Processed! Successfully inserted ${data.processed ?? 0} leads into PostgreSQL.`);
+      } else {
+        alert("Failed to process queue. It might be empty or missing Upstash keys.");
+      }
+    } catch (error) {
+      alert("Error processing queue.");
+    } finally {
+      setProcessingQueue(false);
+    }
+  }
+
   function clearFilters() {
     setSearch("");
     setStatusFilter("");
@@ -104,6 +124,14 @@ export default function LeadsPage() {
             {leads.length} {leads.length === 1 ? "lead" : "leads"} found
           </p>
         </div>
+        <button
+          onClick={processQueue}
+          disabled={processingQueue}
+          className="btn-primary text-sm py-2.5 px-4 flex items-center gap-2 disabled:opacity-50"
+        >
+          <DatabaseBackup className="w-4 h-4" />
+          {processingQueue ? "Processing..." : "Process Redis Queue"}
+        </button>
       </div>
 
       {/* Filters */}

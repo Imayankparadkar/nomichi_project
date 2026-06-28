@@ -12,6 +12,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
+export async function GET(req: NextRequest) {
+  return POST(req);
+}
+
 export async function POST(req: NextRequest) {
   // SECURITY: Verify the request actually came from our Queue Service (QStash)
   // using crypto signatures. (Omitted here for simplicity, but critical in Prod).
